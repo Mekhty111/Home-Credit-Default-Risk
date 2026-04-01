@@ -2,3 +2,4 @@
 *.parquet
 
 models/*.pkl
+models/*.npy
