@@ -3,3 +3,5 @@
 
 models/*.pkl
 models/*.npy
+
+*venv/
