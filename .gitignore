@@ -5,3 +5,5 @@ models/*.pkl
 models/*.npy
 
 *venv/
+
+*__pycache__/
