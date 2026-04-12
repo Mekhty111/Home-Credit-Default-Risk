@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Precision Dark — {% block title %}{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         hsl(156,22%,4%);
+      --card:       hsl(155,18%,7%);
+      --card2:      hsl(154,16%,9%);
+      --primary:    hsl(153,100%,50%);
+      --primary-fg: hsl(156,22%,4%);
+      --text:       hsl(150,40%,88%);
+      --muted:      hsl(150,16%,49%);
+      --faint:      hsl(150,20%,25%);
+      --dim:        hsl(150,14%,35%);
+      --border:     hsl(150,20%,15%);
+      --warning:    hsl(32,100%,64%);
+      --error:      hsl(346,100%,65%);
+      --radius:     4px;
+    }
+
+    html, body { height: 100%; }
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+      overflow: hidden;
+    }
+
+    /* ── Layout ── */
+    .app-layout {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 240px;
+      min-width: 240px;
+      height: 100vh;
+      background: var(--card);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar-logo {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .sidebar-logo span {
+      color: var(--primary);
+      font-weight: 600;
+      font-size: 13px;
+      letter-spacing: .12em;
+    }
+    .sidebar-nav { flex: 1; padding: 8px 0; }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 13px;
+      border-left: 2px solid transparent;
+      transition: color .15s, background .15s;
+    }
+    .nav-item:hover { color: var(--text); background: rgba(255,255,255,.03); }
+    .nav-item.active {
+      color: var(--primary);
+      background: rgba(0,255,136,.06);
+      border-left-color: var(--primary);
+    }
+    .nav-icon { color: var(--faint); width: 20px; text-align: center; font-size: 12px; }
+    .sidebar-footer {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--faint);
+      font-size: 11px;
+    }
+    .blink-dot {
+      width: 6px; height: 6px;
+      background: var(--primary);
+      border-radius: 50%;
+      animation: blink 1.4s ease-in-out infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
+
+    /* ── Main wrapper ── */
+    .main-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      overflow: hidden;
+    }
+    .terminal-header {
+      height: 40px;
+      border-bottom: 1px solid var(--border);
+      background: var(--card);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+    .header-dot { width:10px;height:10px;border-radius:50%; }
+    .header-dot.red   { background:#ff5f57; }
+    .header-dot.amber { background:#ffbd2e; }
+    .header-dot.green { background:#28c840; }
+    .header-title { color: var(--muted); font-size: 12px; letter-spacing:.08em; margin-left: 8px; }
+    .header-status { margin-left: auto; color: var(--dim); font-size: 11px; }
+    .header-status .dot { color: var(--primary); }
+
+    .main-content { flex:1; overflow-y:auto; }
+
+    /* ── Prediction Panel ── */
+    .prediction-panel {
+      width: 320px;
+      min-width: 320px;
+      height: 100vh;
+      background: var(--card);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+    .panel-header {
+      padding: 8px 16px;
+      border-bottom: 1px solid var(--border);
+      color: var(--primary);
+      font-size: 12px;
+      letter-spacing: .1em;
+    }
+    .panel-body { flex:1; padding:16px; overflow-y:auto; font-size:12px; }
+
+    /* ── Cards & common ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+    .card.scanlines {
+      background-image: repeating-linear-gradient(
+        0deg, transparent, transparent 19px,
+        rgba(0,255,136,.025) 19px, rgba(0,255,136,.025) 20px
+      );
+    }
+    .section-title {
+      color: var(--dim);
+      font-size: 11px;
+      margin-bottom: 10px;
+      letter-spacing: .06em;
+    }
+
+    /* ── Tabs ── */
+    .tabs { display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:16px; }
+    .tab-btn {
+      padding: 8px 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      letter-spacing: .1em;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: color .15s;
+    }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active { border-bottom-color: var(--primary); color: var(--text); }
+    .tab-pane { display:none; }
+    .tab-pane.active { display:block; }
+
+    /* ── Terminal form fields ── */
+    .field-row {
+      display: flex;
+      align-items: center;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+    .field-prompt { color: var(--muted); margin-right: 4px; }
+    .field-label  { color: var(--faint); white-space: nowrap; }
+    .field-dots   { color: var(--faint); }
+    .field-input {
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid var(--border);
+      color: var(--primary);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      width: 120px;
+      padding: 2px 6px;
+      outline: none;
+      transition: border-color .15s;
+    }
+    .field-input:focus { border-bottom-color: var(--primary); }
+    .field-select {
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid var(--border);
+      color: var(--primary);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      padding: 2px 6px;
+      outline: none;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      transition: border-color .15s;
+    }
+    .field-select:focus { border-bottom-color: var(--primary); }
+    .field-select option { background: #0e1410; color: var(--text); }
+
+    /* ── Buttons ── */
+    .btn-primary {
+      width: 100%;
+      height: 44px;
+      background: var(--primary);
+      color: var(--primary-fg);
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      font-size: 13px;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      letter-spacing: .06em;
+      transition: opacity .15s;
+    }
+    .btn-primary:hover { opacity: .88; }
+    .btn-primary:disabled { opacity: .45; cursor: not-allowed; }
+    .btn-secondary {
+      display: block;
+      padding: 9px 16px;
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      border-radius: var(--radius);
+      text-decoration: none;
+      text-align: center;
+      transition: background .15s;
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,.04); }
+
+    /* ── Stats grid ── */
+    .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
+    .stat-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; }
+    .stat-label { color:var(--faint); font-size:11px; margin-bottom:4px; letter-spacing:.06em; }
+    .stat-value { font-size:24px; font-weight:700; }
+    .c-primary { color: var(--primary); }
+    .c-error   { color: var(--error); }
+    .c-warning { color: var(--warning); }
+    .c-muted   { color: var(--muted); }
+    .c-text    { color: var(--text); }
+
+    /* ── History table ── */
+    .hist-table { width:100%; border-collapse:collapse; font-size:12px; }
+    .hist-table th {
+      text-align:left; padding:8px 12px;
+      color:var(--dim); font-weight:500;
+      border-bottom:1px solid var(--border);
+      font-size:11px; letter-spacing:.06em;
+    }
+    .hist-table td { padding:8px 12px; border-bottom:1px solid rgba(255,255,255,.04); }
+    .hist-table tr:hover td { background:rgba(255,255,255,.02); }
+
+    /* ── Score bar ── */
+    .score-bar-track { width:100%; height:4px; background:var(--border); border-radius:2px; margin:4px 0 2px; }
+    .score-bar-fill  { height:4px; border-radius:2px; transition:width .8s cubic-bezier(.4,0,.2,1); }
+    .score-labels { display:flex; justify-content:space-between; color:var(--faint); font-size:10px; }
+
+    /* ── Prediction panel result ── */
+    .result-line { display:flex; justify-content:space-between; margin-bottom:6px; }
+    .result-key  { color:var(--faint); }
+    .result-val  { font-weight:500; }
+    .prob-bar-track { width:100%; height:3px; background:var(--border); border-radius:2px; margin-top:3px; }
+    .prob-bar-fill  { height:3px; border-radius:2px; background:var(--primary); transition:width .6s ease; }
+
+    /* ── Typewriter / loading ── */
+    .tw-lines { font-size:12px; color:var(--dim); line-height:1.8; }
+    .blink-cursor::after {
+      content:'█'; color:var(--primary);
+      animation: blink 1s step-end infinite;
+    }
+
+    /* ── Page enter animation ── */
+    .page-enter { animation: fadeIn .3s ease; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width:6px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
+    /* ── Toast ── */
+    #toast-container {
+      position: fixed; bottom:20px; right:340px;
+      display:flex; flex-direction:column; gap:8px;
+      z-index:9999;
+    }
+    .toast {
+      background:var(--card2); border:1px solid var(--border);
+      border-radius:var(--radius); padding:10px 16px;
+      font-size:12px; color:var(--text);
+      animation: slideIn .2s ease;
+      max-width:320px;
+    }
+    .toast.error { border-color:var(--error); color:var(--error); }
+    @keyframes slideIn { from{opacity:0;transform:translateX(16px)} to{opacity:1;transform:translateX(0)} }
+
+    p { color: var(--muted); line-height:1.7; max-width:60ch; }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+        <rect x="2" y="2" width="20" height="20" rx="2" stroke="hsl(153,100%,50%)" stroke-width="1.5"/>
+        <path d="M7 12l3 3 7-7" stroke="hsl(153,100%,50%)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>Precision Dark</span>
+    </div>
+    <nav class="sidebar-nav">
+      {% set nav = [
+        ("/ui",          "[/]",  "Dashboard"),
+        ("/ui/score",    "[>_]", "Score Client"),
+        ("/ui/history",  "[≡]",  "History"),
+        ("/ui/model",    "[◈]",  "Model Info"),
+      ] %}
+      {% for path, icon, label in nav %}
+      <a href="{{ path }}" class="nav-item {% if request.url.path == path %}active{% endif %}">
+        <span class="nav-icon">{{ icon }}</span>
+        {{ label }}
+      </a>
+      {% endfor %}
+    </nav>
+    <div class="sidebar-footer">
+      <span>API LIVE</span>
+      <span class="blink-dot"></span>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main-wrapper">
+    <header class="terminal-header">
+      <span class="header-title">&gt; {{ self.title() }}</span>
+      <span class="header-status"><span class="dot">●</span> localhost:8000</span>
+    </header>
+    <main class="main-content">
+      <div class="page-enter" style="padding:24px">
+        {% block content %}{% endblock %}
+      </div>
+    </main>
+  </div>
+
+  <!-- Prediction Panel -->
+  <aside class="prediction-panel">
+    <div class="panel-header">&gt; PREDICTION OUTPUT</div>
+    <div class="panel-body" id="prediction-panel-body">
+      <span class="blink-cursor" style="color:var(--faint);font-size:12px">Awaiting input...</span>
+    </div>
+  </aside>
+
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<script>
+// ── Storage ──────────────────────────────────────────────────────────────
+const Storage = {
+  getHistory: () => { try { return JSON.parse(localStorage.getItem('st_history')||'[]'); } catch { return []; } },
+  addHistory: (entry) => {
+    const h = Storage.getHistory();
+    h.unshift(entry);
+    localStorage.setItem('st_history', JSON.stringify(h.slice(0,200)));
+  },
+  getLastResult: () => { try { return JSON.parse(localStorage.getItem('st_last')||'null'); } catch { return null; } },
+  setLastResult: (r) => localStorage.setItem('st_last', JSON.stringify(r)),
+  clearHistory: () => localStorage.removeItem('st_history'),
+};
+
+// ── Toast ─────────────────────────────────────────────────────────────────
+function toast(msg, isErr=false) {
+  const el = document.createElement('div');
+  el.className = 'toast' + (isErr ? ' error' : '');
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// ── Prediction Panel ──────────────────────────────────────────────────────
+function riskColor(band) {
+  if (!band) return 'var(--text)';
+  if (band==='Very Low'||band==='Low') return 'var(--primary)';
+  if (band==='Medium') return 'var(--warning)';
+  return 'var(--error)';
+}
+function actionColor(action) {
+  if (!action) return 'var(--text)';
+  if (action.startsWith('APPROVE')) return 'var(--primary)';
+  if (action==='MANUAL REVIEW'||action==='CONDITIONAL APPROVE') return 'var(--warning)';
+  return 'var(--error)';
+}
+function scoreBarPct(score) {
+  return Math.min(100, Math.max(0, ((score-400)/(800-400))*100));
+}
+function scoreBarColor(score) {
+  if (score>=640) return 'var(--primary)';
+  if (score>=600) return 'rgba(0,255,136,.6)';
+  if (score>=560) return 'var(--warning)';
+  return 'var(--error)';
+}
+
+function animateCount(el, target, duration=1200) {
+  const start = performance.now();
+  function tick(now) {
+    const p = Math.min((now-start)/duration, 1);
+    const eased = 1 - Math.pow(1-p, 3);
+    el.textContent = Math.round(eased*target);
+    if (p<1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+function renderPredictionPanel(result) {
+  if (!result) return;
+  const ts = new Date().toISOString().replace('T',' ').slice(0,19);
+  const pct = scoreBarPct(result.score);
+  const aColor = actionColor(result.action);
+  const rColor = riskColor(result.risk_band);
+  const html = `
+    <div style="font-size:12px;line-height:1.7">
+      <div style="color:var(--faint)">┌─ SCORING RESULT ─────────────────┐</div>
+
+      <div style="text-align:center;padding:10px 0">
+        <span style="font-weight:700;font-size:13px;color:${aColor}">
+          ██ ${result.action} ██
+        </span>
+      </div>
+
+      <div style="margin-bottom:12px">
+        <div class="result-line">
+          <span class="result-key">  Scorecard:</span>
+          <span class="result-val" id="score-counter" style="color:${rColor};font-weight:700">0</span>
+        </div>
+        <div style="padding:0 8px">
+          <div class="score-bar-track">
+            <div class="score-bar-fill" id="score-bar" style="width:0%;background:${scoreBarColor(result.score)}"></div>
+          </div>
+          <div class="score-labels"><span>400</span><span>600</span><span>800</span></div>
+        </div>
+      </div>
+
+      <div class="result-line">
+        <span class="result-key">  Risk band:</span>
+        <span class="result-val" style="color:${rColor}">${result.risk_band}</span>
+      </div>
+      <div style="color:var(--muted);font-size:11px;margin:4px 0 12px 8px;line-height:1.5">${result.interpretation}</div>
+
+      <div style="color:var(--faint);margin-bottom:6px">  ─── MODEL PROBABILITIES ─────────</div>
+
+      <div style="margin-bottom:4px">
+        <div class="result-line">
+          <span class="result-key">  LR (scorecard):</span>
+          <span style="color:${rColor}">${(result.lr_probability*100).toFixed(2)}%</span>
+        </div>
+        <div style="padding:0 8px">
+          <div class="prob-bar-track"><div class="prob-bar-fill" style="width:${result.lr_probability*100}%;background:${rColor}"></div></div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:12px">
+        <div class="result-line">
+          <span class="result-key">  LightGBM:</span>
+          <span style="color:${rColor}">${(result.lgbm_probability*100).toFixed(2)}%</span>
+        </div>
+        <div style="padding:0 8px">
+          <div class="prob-bar-track"><div class="prob-bar-fill" style="width:${result.lgbm_probability*100}%;background:${rColor}"></div></div>
+        </div>
+      </div>
+      <div style="color:var(--faint);font-size:11px;margin-bottom:2px">  ─ P(default) — lower is better ─</div>
+
+      <div style="padding-top:10px;color:var(--faint);font-size:11px">
+        <div>  timestamp: ${ts}</div>
+      </div>
+      <div style="color:var(--faint)">└──────────────────────────────────┘</div>
+    </div>`;
+
+  document.getElementById('prediction-panel-body').innerHTML = html;
+  setTimeout(() => {
+    document.getElementById('score-bar').style.width = pct + '%';
+    animateCount(document.getElementById('score-counter'), result.score);
+  }, 100);
+}
+
+// ── Typewriter loading ────────────────────────────────────────────────────
+function showLoading() {
+  const lines = [
+    '&gt; Connecting to scoring engine...',
+    '&gt; WoE transform... ██████████ 100%',
+    '&gt; Running LR + LGBM inference...',
+  ];
+  const panel = document.getElementById('prediction-panel-body');
+  panel.innerHTML = '<div class="tw-lines" id="tw"></div>';
+  const tw = document.getElementById('tw');
+  let i = 0;
+  return new Promise(resolve => {
+    const iv = setInterval(() => {
+      if (i < lines.length) { tw.innerHTML += lines[i++] + '<br>'; }
+      else { clearInterval(iv); setTimeout(resolve, 200); }
+    }, 300);
+  });
+}
+
+// Restore last result on every page
+window.addEventListener('DOMContentLoaded', () => {
+  const last = Storage.getLastResult();
+  if (last) renderPredictionPanel(last);
+});
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

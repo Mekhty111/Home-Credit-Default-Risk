@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+
+<div class="section-title">&gt; SYSTEM DASHBOARD</div>
+
+<!-- Stats (populated by JS from localStorage) -->
+<div class="stats-grid" id="stats-grid">
+  <div class="stat-card"><div class="stat-label">TOTAL SCORED</div><div class="stat-value c-text" id="s-total">0</div></div>
+  <div class="stat-card"><div class="stat-label">APPROVED</div><div class="stat-value c-primary" id="s-approved">0</div></div>
+  <div class="stat-card"><div class="stat-label">REJECTED</div><div class="stat-value c-error" id="s-rejected">0</div></div>
+  <div class="stat-card"><div class="stat-label">AVG SCORE</div><div class="stat-value c-text" id="s-avg">—</div></div>
+</div>
+
+<!-- Quick actions -->
+<div class="card" style="margin-bottom:16px">
+  <div class="section-title">── QUICK ACTIONS ──────────────────────</div>
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <a href="/ui/score" class="btn-primary" style="display:flex;align-items:center;justify-content:center;text-decoration:none;height:44px;border-radius:4px;font-family:inherit;font-weight:700;letter-spacing:.06em;background:var(--primary);color:var(--primary-fg)">
+      ▶&nbsp; RUN SCORING MODEL
+    </a>
+    <a href="/ui/history" class="btn-secondary" id="hist-link">≡&nbsp; VIEW HISTORY (0 records)</a>
+  </div>
+</div>
+
+<!-- System info -->
+<div class="card">
+  <div class="section-title">── SYSTEM STATUS ──────────────────────</div>
+  <div style="line-height:2">
+    <div>API_ENDPOINT: <span class="c-text">http://localhost:8000/score</span></div>
+    <div>MODEL:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="c-text">LR (WoE) + LightGBM</span></div>
+    <div>SCORECARD:&nbsp;&nbsp;&nbsp; <span class="c-text">PDO=20 | BASE=600 | BASE_ODDS=19</span></div>
+    <div>RISK_BANDS:&nbsp;&nbsp; <span style="color:var(--error)">&lt;520 REJECT</span> · <span style="color:var(--warning)">520–600 REVIEW</span> · <span style="color:var(--primary)">&gt;600 APPROVE</span></div>
+    <div>DOCS:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a href="/docs" style="color:var(--primary)" target="_blank">/docs</a> · <a href="/redoc" style="color:var(--primary)" target="_blank">/redoc</a></div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const h = Storage.getHistory();
+  const approved = h.filter(x => x.action && x.action.startsWith('APPROVE')).length;
+  const rejected = h.filter(x => x.action === 'REJECT').length;
+  const avgScore = h.length ? Math.round(h.reduce((s,x)=>s+x.score,0)/h.length) : null;
+
+  document.getElementById('s-total').textContent    = h.length;
+  document.getElementById('s-approved').textContent = approved;
+  document.getElementById('s-rejected').textContent = rejected;
+  document.getElementById('s-avg').textContent      = avgScore ?? '—';
+  document.getElementById('hist-link').textContent  = `≡  VIEW HISTORY (${h.length} records)`;
+});
+</script>
+{% endblock %}

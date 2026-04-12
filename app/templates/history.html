@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}History{% endblock %}
+{% block content %}
+
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+  <div class="section-title">&gt; SCORING HISTORY</div>
+  <button onclick="clearHist()" style="font-family:inherit;font-size:11px;color:var(--error);background:none;border:1px solid var(--error);border-radius:4px;padding:4px 12px;cursor:pointer;opacity:.7">
+    CLEAR ALL
+  </button>
+</div>
+
+<div class="card" style="padding:0;overflow:hidden">
+  <div style="overflow-x:auto">
+    <table class="hist-table">
+      <thead>
+        <tr>
+          <th>#</th><th>TIMESTAMP</th><th>SCORE</th><th>RISK BAND</th>
+          <th>ACTION</th><th>LR PROB</th><th>LGBM PROB</th>
+        </tr>
+      </thead>
+      <tbody id="hist-body">
+        <tr><td colspan="7" style="color:var(--faint);padding:32px;text-align:center">
+          No scoring history yet. <a href="/ui/score" style="color:var(--primary)">Run first score →</a>
+        </td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const h = Storage.getHistory();
+  if (!h.length) return;
+  const tbody = document.getElementById('hist-body');
+  tbody.innerHTML = h.map((e, i) => {
+    const ac = actionColor(e.action);
+    const rc = riskColor(e.risk_band);
+    return `<tr>
+      <td style="color:var(--faint)">${String(i+1).padStart(4,'0')}</td>
+      <td style="color:var(--muted)">${e.timestamp||'—'}</td>
+      <td style="font-weight:700;color:${rc}">${e.score}</td>
+      <td style="color:${rc}">${e.risk_band}</td>
+      <td style="font-weight:600;color:${ac}">${e.action}</td>
+      <td>${(e.lr_probability*100).toFixed(2)}%</td>
+      <td>${(e.lgbm_probability*100).toFixed(2)}%</td>
+    </tr>`;
+  }).join('');
+});
+
+function clearHist() {
+  if (!confirm('Clear all history?')) return;
+  Storage.clearHistory();
+  location.reload();
+}
+</script>
+{% endblock %}

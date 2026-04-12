@@ -3,7 +3,6 @@ import pandas as pd
 import joblib
 import json
 
-# Load artifacts once at startup
 LR              = joblib.load('../models/logreg_woe.pkl')
 LGBM            = joblib.load('../models/lgbm_model.pkl')
 BINNING_PROCESS = joblib.load('../models/binning_process.pkl')
@@ -11,7 +10,9 @@ BINNING_PROCESS = joblib.load('../models/binning_process.pkl')
 with open('../models/feature_names.json') as f:
     FEATURES = json.load(f)
 
-# Scorecard scaling
+# Все переменные которые знает BinningProcess
+BP_VARS = BINNING_PROCESS.variable_names
+
 PDO        = 20
 BASE_SCORE = 600
 BASE_ODDS  = 19
@@ -21,23 +22,23 @@ OFFSET     = BASE_SCORE - FACTOR * np.log(BASE_ODDS)
 
 def get_risk_band(score: int) -> tuple:
     if score < 520:
-        return 'Very High',  'REJECT',              'High default risk — application declined'
+        return 'Very High',  'REJECT',             'High default risk — application declined'
     elif score < 560:
-        return 'High',       'MANUAL REVIEW',        'Elevated risk — requires manual underwriting'
+        return 'High',       'MANUAL REVIEW',       'Elevated risk — requires manual underwriting'
     elif score < 600:
-        return 'Medium',     'CONDITIONAL APPROVE',  'Moderate risk — approve with conditions'
+        return 'Medium',     'CONDITIONAL APPROVE', 'Moderate risk — approve with conditions'
     elif score < 640:
-        return 'Low',        'APPROVE',              'Low risk — approve standard terms'
+        return 'Low',        'APPROVE',             'Low risk — approve standard terms'
     else:
-        return 'Very Low',   'APPROVE + BEST RATE',  'Minimal risk — approve with best interest rate'
+        return 'Very Low',   'APPROVE + BEST RATE', 'Minimal risk — approve with best interest rate'
 
 
 def preprocess(input_dict: dict) -> pd.DataFrame:
     """Encode categoricals and apply WoE transformation."""
     df = pd.DataFrame([input_dict])
 
-    # Fill missing features with NaN
-    for col in FEATURES:
+    # Добавляем ВСЕ переменные binning_process — отсутствующие → NaN
+    for col in BP_VARS:
         if col not in df.columns:
             df[col] = np.nan
 
@@ -50,7 +51,12 @@ def preprocess(input_dict: dict) -> pd.DataFrame:
                    .cat.codes
                    .astype(float))
 
-    return BINNING_PROCESS.transform(df[FEATURES], metric='woe')
+    # Передаём ВСЕ bp_vars, потом выбираем только FEATURES
+    X = df[BP_VARS].copy().astype(float)
+    woe_all = BINNING_PROCESS.transform(X, metric='woe')
+
+    # Возвращаем только финальные фичи модели
+    return woe_all[FEATURES]
 
 
 def predict(input_dict: dict) -> dict:
@@ -60,7 +66,6 @@ def predict(input_dict: dict) -> dict:
     lr_prob   = float(LR.predict_proba(woe)[0][1])
     lgbm_prob = float(LGBM.predict_proba(woe)[0][1])
 
-    # Scorecard
     n      = len(FEATURES)
     offset = (OFFSET + FACTOR * LR.intercept_[0]) / n
     score  = sum(

@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% block title %}Score Client{% endblock %}
+{% block content %}
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('input',this)">[INPUT]</button>
+  <button class="tab-btn" onclick="switchTab('json',this)">[RAW JSON]</button>
+</div>
+
+<!-- INPUT TAB -->
+<div id="tab-input" class="tab-pane active">
+  <div class="card scanlines">
+    <div style="color:var(--faint);margin-bottom:16px">
+      ┌─ HOME CREDIT APPLICATION PARAMETERS ─────────────────────────┐
+    </div>
+
+    <!-- EXTERNAL SOURCES -->
+    <div class="section-title" style="margin-top:4px">── EXTERNAL SOURCES ─────────────────────────</div>
+    <div style="margin-left:8px;margin-bottom:16px">
+      {% set ext_fields = [
+        ("EXT_SOURCE_1","EXT_SOURCE_1","number","0.01","0.51"),
+        ("EXT_SOURCE_2","EXT_SOURCE_2","number","0.01","0.62"),
+        ("EXT_SOURCE_3","EXT_SOURCE_3","number","0.01","0.72"),
+      ] %}
+      {% for id,label,type,step,val in ext_fields %}
+      <div class="field-row">
+        <span class="field-prompt">$ </span>
+        <span class="field-label">{{ label }} </span>
+        <span class="field-dots" id="dots-{{ id }}"></span>
+        <input class="field-input" type="{{ type }}" id="{{ id }}" step="{{ step }}" value="{{ val }}" oninput="updateJson()">
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- APPLICANT INFO -->
+    <div class="section-title">── APPLICANT INFO ──────────────────────────────</div>
+    <div style="margin-left:8px;margin-bottom:16px">
+      <div class="field-row">
+        <span class="field-prompt">$ </span><span class="field-label">DAYS_BIRTH </span>
+        <span class="field-dots" id="dots-DAYS_BIRTH"></span>
+        <input class="field-input" type="number" id="DAYS_BIRTH" step="1" value="-12000" oninput="updateJson()">
+      </div>
+      <div class="field-row">
+        <span class="field-prompt">$ </span><span class="field-label">DAYS_EMPLOYED </span>
+        <span class="field-dots" id="dots-DAYS_EMPLOYED"></span>
+        <input class="field-input" type="number" id="DAYS_EMPLOYED" step="1" value="-2000" oninput="updateJson()">
+      </div>
+      <div class="field-row">
+        <span class="field-prompt">$ </span><span class="field-label">CODE_GENDER </span>
+        <span class="field-dots" id="dots-CODE_GENDER"></span>
+        <select class="field-select" id="CODE_GENDER" onchange="updateJson()">
+          <option value="M">M</option><option value="F">F</option>
+        </select>
+      </div>
+      <div class="field-row">
+        <span class="field-prompt">$ </span><span class="field-label">FLAG_OWN_CAR </span>
+        <span class="field-dots" id="dots-FLAG_OWN_CAR"></span>
+        <select class="field-select" id="FLAG_OWN_CAR" onchange="updateJson()">
+          <option value="N">N</option><option value="Y">Y</option>
+        </select>
+      </div>
+      <div class="field-row">
+        <span class="field-prompt">$ </span><span class="field-label">FLAG_OWN_REALTY </span>
+        <span class="field-dots" id="dots-FLAG_OWN_REALTY"></span>
+        <select class="field-select" id="FLAG_OWN_REALTY" onchange="updateJson()">
+          <option value="Y">Y</option><option value="N">N</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- FINANCIAL -->
+    <div class="section-title">── FINANCIAL ───────────────────────────────────</div>
+    <div style="margin-left:8px;margin-bottom:16px">
+      {% set fin_fields = [
+        ("AMT_INCOME_TOTAL","AMT_INCOME_TOTAL","number","1","180000"),
+        ("AMT_CREDIT","AMT_CREDIT","number","1","450000"),
+        ("AMT_ANNUITY","AMT_ANNUITY","number","1","22500"),
+        ("AMT_GOODS_PRICE","AMT_GOODS_PRICE","number","1","400000"),
+      ] %}
+      {% for id,label,type,step,val in fin_fields %}
+      <div class="field-row">
+        <span class="field-prompt">$ </span>
+        <span class="field-label">{{ label }} </span>
+        <span class="field-dots" id="dots-{{ id }}"></span>
+        <input class="field-input" type="{{ type }}" id="{{ id }}" step="{{ step }}" value="{{ val }}" oninput="updateJson()">
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- PROFILE -->
+    <div class="section-title">── PROFILE ─────────────────────────────────────</div>
+    <div style="margin-left:8px;margin-bottom:20px">
+      <div class="field-row">
+        <span class="field-prompt">$ </span><span class="field-label">NAME_EDUCATION_TYPE </span>
+        <span class="field-dots" id="dots-NAME_EDUCATION_TYPE"></span>
+        <select class="field-select" id="NAME_EDUCATION_TYPE" onchange="updateJson()">
+          <option>Higher education</option>
+          <option>Secondary / secondary special</option>
+          <option>Incomplete higher</option>
+          <option>Lower secondary</option>
+          <option>Academic degree</option>
+        </select>
+      </div>
+      <div class="field-row">
+        <span class="field-prompt">$ </span><span class="field-label">NAME_INCOME_TYPE </span>
+        <span class="field-dots" id="dots-NAME_INCOME_TYPE"></span>
+        <select class="field-select" id="NAME_INCOME_TYPE" onchange="updateJson()">
+          <option>Working</option>
+          <option>Commercial associate</option>
+          <option>Pensioner</option>
+          <option>State servant</option>
+          <option>Unemployed</option>
+        </select>
+      </div>
+      <div class="field-row">
+        <span class="field-prompt">$ </span><span class="field-label">REGION_RATING_CLIENT </span>
+        <span class="field-dots" id="dots-REGION_RATING_CLIENT"></span>
+        <select class="field-select" id="REGION_RATING_CLIENT" onchange="updateJson()">
+          <option value="1">1</option>
+          <option value="2" selected>2</option>
+          <option value="3">3</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="submit-btn" onclick="handleSubmit()">
+      ▶&nbsp; RUN SCORING MODEL
+    </button>
+  </div>
+</div>
+
+<!-- JSON TAB -->
+<div id="tab-json" class="tab-pane">
+  <div class="card">
+    <pre id="json-preview" style="font-size:12px;color:var(--text);overflow-x:auto;line-height:1.7"></pre>
+  </div>
+</div>
+
+<script>
+// ── Dots alignment ───────────────────────────────────────
+const MAX_LABEL = 24;
+document.querySelectorAll('.field-label').forEach(el => {
+  const id = el.closest('.field-row')?.querySelector('[id]')?.id;
+  if (!id) return;
+  const dotsEl = document.getElementById('dots-' + id);
+  if (!dotsEl) return;
+  const len = el.textContent.trim().length;
+  dotsEl.textContent = '.'.repeat(Math.max(2, MAX_LABEL - len)) + ' ';
+});
+
+// ── Tab switching ─────────────────────────────────────────
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── Collect form values ───────────────────────────────────
+function collectInput() {
+  const numIds = ['EXT_SOURCE_1','EXT_SOURCE_2','EXT_SOURCE_3',
+                  'DAYS_BIRTH','DAYS_EMPLOYED',
+                  'AMT_INCOME_TOTAL','AMT_CREDIT','AMT_ANNUITY','AMT_GOODS_PRICE'];
+  const selIds = ['CODE_GENDER','FLAG_OWN_CAR','FLAG_OWN_REALTY',
+                  'NAME_EDUCATION_TYPE','NAME_INCOME_TYPE'];
+  const obj = {};
+  numIds.forEach(id => {
+    const v = parseFloat(document.getElementById(id).value);
+    if (!isNaN(v)) obj[id] = v;
+  });
+  selIds.forEach(id => { obj[id] = document.getElementById(id).value; });
+  obj['REGION_RATING_CLIENT'] = parseInt(document.getElementById('REGION_RATING_CLIENT').value);
+  return obj;
+}
+
+function updateJson() {
+  document.getElementById('json-preview').textContent =
+    JSON.stringify(collectInput(), null, 2);
+}
+updateJson();
+
+// ── Submit ────────────────────────────────────────────────
+async function handleSubmit() {
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = '█ PROCESSING...';
+
+  await showLoading();
+
+  const input = collectInput();
+  try {
+    const res = await fetch('/score', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(input),
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const result = await res.json();
+
+    Storage.addHistory({...result, timestamp: new Date().toISOString().replace('T',' ').slice(0,19), input});
+    Storage.setLastResult(result);
+    renderPredictionPanel(result);
+    toast('[OK]  Score: ' + result.score + ' | ' + result.action);
+  } catch (err) {
+    document.getElementById('prediction-panel-body').innerHTML =
+      '<span style="color:var(--error);font-size:12px">[ERR] ' + err.message + '</span>';
+    toast('[ERR] ' + err.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '&#9654;&nbsp; RUN SCORING MODEL';
+  }
+}
+</script>
+{% endblock %}

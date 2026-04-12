@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Model Info{% endblock %}
+{% block content %}
+
+<div class="section-title">&gt; MODEL INFORMATION</div>
+
+<!-- Model overview -->
+<div class="card" style="margin-bottom:16px">
+  <div class="section-title">── ARCHITECTURE ─────────────────────────────</div>
+  <div style="line-height:2">
+    <div><span class="c-primary">LR (Scorecard)</span> — Logistic Regression on WoE-encoded features</div>
+    <div><span class="c-primary">LightGBM</span>       — gradient boosting probability benchmark</div>
+    <div style="margin-top:8px;color:var(--muted)">
+      Features are transformed via BinningProcess (WoE) before LR inference.<br>
+      Scorecard points computed using PDO=20, Base=600, BaseOdds=19 formula.
+    </div>
+  </div>
+</div>
+
+<!-- Score bands -->
+<div class="card" style="margin-bottom:16px">
+  <div class="section-title">── RISK BANDS ────────────────────────────────</div>
+  <table class="hist-table">
+    <thead>
+      <tr><th>SCORE RANGE</th><th>RISK BAND</th><th>ACTION</th><th>DESCRIPTION</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>&lt; 520</td><td style="color:var(--error)">Very High</td><td style="color:var(--error);font-weight:600">REJECT</td><td style="color:var(--muted)">High default risk</td></tr>
+      <tr><td>520 – 559</td><td style="color:var(--error)">High</td><td style="color:var(--warning);font-weight:600">MANUAL REVIEW</td><td style="color:var(--muted)">Requires underwriting</td></tr>
+      <tr><td>560 – 599</td><td style="color:var(--warning)">Medium</td><td style="color:var(--warning);font-weight:600">CONDITIONAL APPROVE</td><td style="color:var(--muted)">Approve with conditions</td></tr>
+      <tr><td>600 – 639</td><td style="color:var(--primary)">Low</td><td style="color:var(--primary);font-weight:600">APPROVE</td><td style="color:var(--muted)">Standard terms</td></tr>
+      <tr><td>≥ 640</td><td style="color:var(--primary)">Very Low</td><td style="color:var(--primary);font-weight:600">APPROVE + BEST RATE</td><td style="color:var(--muted)">Best interest rate</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Features (loaded from API) -->
+<div class="card">
+  <div class="section-title">── MODEL FEATURES <span id="feat-count" style="color:var(--primary)"></span> ──</div>
+  <div id="features-list" style="color:var(--muted);font-size:12px">Loading from API...</div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const res = await fetch('/features');
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    document.getElementById('feat-count').textContent = `(${data.count} features)`;
+    document.getElementById('features-list').innerHTML = data.features
+      .map((f, i) =>
+        `<span style="display:inline-block;margin:3px 6px 3px 0;padding:2px 8px;
+         border:1px solid var(--border);border-radius:3px;color:var(--primary);font-size:11px">
+          ${f}
+        </span>`)
+      .join('');
+  } catch {
+    document.getElementById('features-list').textContent = 'Could not load features (API offline)';
+  }
+});
+</script>
+{% endblock %}
