@@ -3,10 +3,8 @@
 {% block content %}
 
 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-  <div class="section-title">&gt; SCORING HISTORY</div>
-  <button onclick="clearHist()" style="font-family:inherit;font-size:11px;color:var(--error);background:none;border:1px solid var(--error);border-radius:4px;padding:4px 12px;cursor:pointer;opacity:.7">
-    CLEAR ALL
-  </button>
+  <div class="section-title" data-i18n="history_title"></div>
+  <button onclick="clearHist()" style="font-family:inherit;font-size:11px;color:var(--error);background:none;border:1px solid var(--error);border-radius:4px;padding:4px 12px;cursor:pointer;opacity:.7" data-i18n="clear_all"></button>
 </div>
 
 <div class="card" style="padding:0;overflow:hidden">
@@ -14,24 +12,32 @@
     <table class="hist-table">
       <thead>
         <tr>
-          <th>#</th><th>TIMESTAMP</th><th>SCORE</th><th>RISK BAND</th>
-          <th>ACTION</th><th>LR PROB</th><th>LGBM PROB</th>
+          <th data-i18n="col_id"></th>
+          <th data-i18n="col_timestamp"></th>
+          <th data-i18n="col_score"></th>
+          <th data-i18n="col_risk"></th>
+          <th data-i18n="col_action"></th>
+          <th data-i18n="col_lr"></th>
+          <th data-i18n="col_lgbm"></th>
         </tr>
       </thead>
-      <tbody id="hist-body">
-        <tr><td colspan="7" style="color:var(--faint);padding:32px;text-align:center">
-          No scoring history yet. <a href="/ui/score" style="color:var(--primary)">Run first score →</a>
-        </td></tr>
-      </tbody>
+      <tbody id="hist-body"></tbody>
     </table>
   </div>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', () => {
+function renderHistory() {
   const h = Storage.getHistory();
-  if (!h.length) return;
   const tbody = document.getElementById('hist-body');
+  if (!h.length) {
+    tbody.innerHTML = `<tr><td colspan="7" style="color:var(--faint);padding:32px;text-align:center">
+      <span data-i18n="no_history"></span>
+      <a href="/ui/score" style="color:var(--primary)" data-i18n="run_first"></a>
+    </td></tr>`;
+    applyTranslations();
+    return;
+  }
   tbody.innerHTML = h.map((e, i) => {
     const ac = actionColor(e.action);
     const rc = riskColor(e.risk_band);
@@ -45,12 +51,15 @@ document.addEventListener('DOMContentLoaded', () => {
       <td>${(e.lgbm_probability*100).toFixed(2)}%</td>
     </tr>`;
   }).join('');
-});
+}
 
 function clearHist() {
   if (!confirm('Clear all history?')) return;
   Storage.clearHistory();
-  location.reload();
+  renderHistory();
 }
+
+document.addEventListener('DOMContentLoaded', renderHistory);
+document.addEventListener('langchange', () => { applyTranslations(); renderHistory(); });
 </script>
 {% endblock %}
