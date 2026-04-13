@@ -3,14 +3,14 @@
 
 [![Python](https://img.shields.io/badge/Python-3.13-blue?style=flat-square&logo=python)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-green?style=flat-square&logo=fastapi)](https://fastapi.tiangolo.com)
-[![React](https://img.shields.io/badge/React-18.3-61DAFB?style=flat-square&logo=react)](https://react.dev)
+[![Jinja2](https://img.shields.io/badge/Jinja2-3.x-B41717?style=flat-square&logo=jinja)](https://jinja.palletsprojects.com)
 [![scikit-learn](https://img.shields.io/badge/scikit--learn-1.5.2-F7931E?style=flat-square&logo=scikitlearn)](https://scikit-learn.org)
 [![LightGBM](https://img.shields.io/badge/LightGBM-latest-blue?style=flat-square)](https://lightgbm.readthedocs.io)
 [![License](https://img.shields.io/badge/License-MIT-gray?style=flat-square)](LICENSE)
 
 ---
 
-A production-grade **Probability of Default (PD) model** built on the [Home Credit Kaggle dataset](https://www.kaggle.com/c/home-credit-default-risk), following retail banking methodology end-to-end — from raw multi-table data to a deployable scorecard API with a React terminal UI.
+A production-grade **Probability of Default (PD) model** built on the [Home Credit Kaggle dataset](https://www.kaggle.com/c/home-credit-default-risk), following retail banking methodology end-to-end — from raw multi-table data to a deployable scorecard API with a server-rendered terminal UI.
 
 > Built as a graduation project for SkillFactory Data Science program. Designed to reflect real-world credit risk modelling practices used in retail banking.
 
@@ -56,14 +56,14 @@ A production-grade **Probability of Default (PD) model** built on the [Home Cred
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                        React Frontend                        │
-│         Vite · TypeScript · shadcn/ui · Tailwind CSS        │
-│    Dashboard · Score Applicant · History · Model Info        │
+│                     Jinja2 Frontend                          │
+│         HTML · CSS · Vanilla JS · Server-Side Rendering     │
+│    Dashboard · Score · History · Model Info                  │
 └────────────────────────┬────────────────────────────────────┘
-                         │ HTTP (fetch)
+                         │ HTTP (fetch / form submit)
 ┌────────────────────────▼────────────────────────────────────┐
 │                       FastAPI Backend                        │
-│         POST /score · GET /scorecard · GET /features        │
+│   GET / · POST /score · GET /scorecard · GET /features      │
 └────────────────────────┬────────────────────────────────────┘
                          │
 ┌────────────────────────▼────────────────────────────────────┐
@@ -73,7 +73,7 @@ A production-grade **Probability of Default (PD) model** built on the [Home Cred
 └─────────────────────────────────────────────────────────────┘
 ```
 
-**Production mode:** FastAPI serves the Vite build as static files — single server, single port.
+**Single server:** FastAPI serves Jinja2 templates directly — no build step, no separate frontend server.
 
 ---
 
@@ -121,28 +121,16 @@ home-credit-default-risk/
 │   ├── feature_names.json
 │   └── scorecard_table.csv         # ← tracked: key deliverable
 │
-├── app/                            # FastAPI backend
-│   ├── main.py
-│   ├── predict.py
-│   └── schemas.py
-│
-└── frontend/                       # React terminal UI
-    ├── src/
-    │   ├── lib/
-    │   │   ├── api.ts              # API client
-    │   │   └── risk.ts             # Risk band config, score utils
-    │   ├── store/
-    │   │   └── historyStore.ts     # Zustand + localStorage
-    │   ├── components/
-    │   │   └── AppLayout.tsx       # Sidebar + topbar
-    │   └── pages/
-    │       ├── Dashboard.tsx
-    │       ├── ScoreClient.tsx
-    │       ├── History.tsx
-    │       ├── ModelInfo.tsx
-    │       └── Settings.tsx
-    ├── package.json
-    └── vite.config.ts
+├── app/                            # FastAPI + Jinja2 UI
+│   ├── main.py                     # Routes: GET / · POST /score · GET /scorecard
+│   ├── predict.py                  # ML inference pipeline
+│   ├── schemas.py                  # Pydantic input/output models
+│   └── templates/                  # Jinja2 HTML templates
+│       ├── base.html               # Layout, navigation, shared CSS
+│       ├── dashboard.html          # Model metrics + session overview
+│       ├── score.html              # Applicant form + live scoring result
+│       ├── history.html            # Scoring log + CSV export
+│       └── model_info.html         # Scorecard table + benchmarks + features
 ```
 
 ---
@@ -206,7 +194,6 @@ Raw Data (7 tables)
 ### Prerequisites
 
 - Python 3.13
-- Node.js 18+ or Bun
 - Kaggle account (for dataset download)
 
 ### 1 · Clone and install
@@ -238,34 +225,17 @@ jupyter notebook
 
 Execute `notebooks/01_data_overview.ipynb` through `notebooks/09_final_summary.ipynb` sequentially. Each notebook saves artifacts consumed by the next.
 
-### 4 · Start the API
+### 4 · Start the application
 
 ```bash
 cd app
 uvicorn main:app --reload --port 8000
 ```
 
-API: `http://localhost:8000`
+App: `http://localhost:8000`
 Swagger UI: `http://localhost:8000/docs`
 
-### 5 · Start the frontend (development)
-
-```bash
-cd frontend
-bun install
-bun dev
-```
-
-Frontend: `http://localhost:8080`
-
-### Production build (single server)
-
-```bash
-cd frontend && bun run build      # → frontend/dist/
-cd ../app && uvicorn main:app --port 8000
-```
-
-Open `http://localhost:8000` — React app served by FastAPI.
+No build step required — Jinja2 templates are rendered server-side on every request.
 
 ---
 
@@ -336,19 +306,20 @@ Health check endpoint. Returns `{"status": "healthy"}`.
 
 ## Frontend
 
-A React terminal UI built with **Vite · TypeScript · shadcn/ui · Tailwind CSS · Zustand · React Query**.
+A server-rendered terminal UI built with **FastAPI · Jinja2 · HTML · CSS · Vanilla JS**.
+
+No frontend framework, no build step — templates are rendered server-side and served directly by FastAPI.
 
 **Pages:**
 
-| Route | Description |
-|---|---|
-| `/` | Dashboard — model metrics, session stats, pipeline overview |
-| `/score` | Score Applicant — input form + live results + score gauge |
-| `/history` | Scoring History — session log with CSV export |
-| `/model` | Model Info — scorecard table, benchmarks, feature list |
-| `/settings` | API configuration |
+| Route | Template | Description |
+|---|---|---|
+| `GET /` | `dashboard.html` | Model metrics, session stats, pipeline overview |
+| `GET /score` | `score.html` | Applicant input form + live scoring result + gauge |
+| `GET /history` | `history.html` | Scoring log with CSV export |
+| `GET /model` | `model_info.html` | Scorecard table, benchmarks, feature list |
 
-**Design:** Dark terminal aesthetic, JetBrains Mono, green primary accent (`hsl(153 100% 50%)`). Scoring history persisted in `localStorage` via Zustand.
+**Design:** Dark terminal aesthetic, JetBrains Mono, green primary accent. Score gauge and results rendered via Vanilla JS after form submission to `POST /score`.
 
 ---
 
@@ -453,4 +424,4 @@ statsmodels
 
 ---
 
-*Built with Python · FastAPI · React · scikit-learn · LightGBM · OptimalBinning*
+*Built with Python · FastAPI · Jinja2 · scikit-learn · LightGBM · OptimalBinning*
