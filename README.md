@@ -1,5 +1,6 @@
 # Home Credit Default Risk
-### End-to-End Credit Scoring Pipeline · Banking ML Portfolio Project
+**Probability of Default (PD) model** built on the [Home Credit Kaggle dataset](https://www.kaggle.com/c/home-credit-default-risk), following retail banking methodology end-to-end — from raw multi-table data to a deployable scorecard API.
+
 
 [![Python](https://img.shields.io/badge/Python-3.13-blue?style=flat-square&logo=python)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-green?style=flat-square&logo=fastapi)](https://fastapi.tiangolo.com)
@@ -7,12 +8,6 @@
 [![scikit-learn](https://img.shields.io/badge/scikit--learn-1.5.2-F7931E?style=flat-square&logo=scikitlearn)](https://scikit-learn.org)
 [![LightGBM](https://img.shields.io/badge/LightGBM-latest-blue?style=flat-square)](https://lightgbm.readthedocs.io)
 [![License](https://img.shields.io/badge/License-MIT-gray?style=flat-square)](LICENSE)
-
----
-
-A production-grade **Probability of Default (PD) model** built on the [Home Credit Kaggle dataset](https://www.kaggle.com/c/home-credit-default-risk), following retail banking methodology end-to-end — from raw multi-table data to a deployable scorecard API with a server-rendered terminal UI.
-
-> Built as a graduation project for SkillFactory Data Science program. Designed to reflect real-world credit risk modelling practices used in retail banking.
 
 ---
 
@@ -57,18 +52,18 @@ A production-grade **Probability of Default (PD) model** built on the [Home Cred
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                     Jinja2 Frontend                          │
-│         HTML · CSS · Vanilla JS · Server-Side Rendering     │
+│         HTML · CSS · Vanilla JS · Server-Side Rendering      │
 │    Dashboard · Score · History · Model Info                  │
 └────────────────────────┬────────────────────────────────────┘
                          │ HTTP (fetch / form submit)
 ┌────────────────────────▼────────────────────────────────────┐
 │                       FastAPI Backend                        │
-│   GET / · POST /score · GET /scorecard · GET /features      │
+│   GET / · POST /score · GET /scorecard · GET /features       │
 └────────────────────────┬────────────────────────────────────┘
                          │
 ┌────────────────────────▼────────────────────────────────────┐
 │                      ML Artifacts                           │
-│   logreg_woe.pkl · lgbm_model.pkl · binning_process.pkl    │
+│   logreg_woe.pkl · lgbm_model.pkl · binning_process.pkl     │
 │   feature_names.json · scorecard_table.csv                  │
 └─────────────────────────────────────────────────────────────┘
 ```
