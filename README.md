@@ -7,7 +7,6 @@
 [![Jinja2](https://img.shields.io/badge/Jinja2-3.x-B41717?style=flat-square&logo=jinja)](https://jinja.palletsprojects.com)
 [![scikit-learn](https://img.shields.io/badge/scikit--learn-1.5.2-F7931E?style=flat-square&logo=scikitlearn)](https://scikit-learn.org)
 [![LightGBM](https://img.shields.io/badge/LightGBM-latest-blue?style=flat-square)](https://lightgbm.readthedocs.io)
-[![License](https://img.shields.io/badge/License-MIT-gray?style=flat-square)](LICENSE)
 
 ---
 
