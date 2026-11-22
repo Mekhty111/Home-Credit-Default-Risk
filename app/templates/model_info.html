@@ -1,82 +1,121 @@
 {% extends "base.html" %}
-{% block title %}Model Info{% endblock %}
+{% block title %}Model{% endblock %}
 {% block content %}
-
-<div class="section-title" data-i18n="model_title"></div>
-
-<div class="card" style="margin-bottom:16px">
-  <div class="section-title" data-i18n="arch_title"></div>
-  <div style="line-height:2">
-    <div><span class="c-primary">LR (Scorecard)</span> — Logistic Regression on WoE-encoded features</div>
-    <div><span class="c-primary">LightGBM</span>       — gradient boosting probability benchmark</div>
-    <div style="margin-top:8px;color:var(--muted)">
-      Features are transformed via BinningProcess (WoE) before LR inference.<br>
-      Scorecard points computed using PDO=20, Base=600, BaseOdds=19 formula.
+<div class="container">
+  <header class="page-head">
+    <div>
+      <div class="page-head__eyebrow" data-reveal><svg class="icon icon--sm"><use href="#i-cpu"/></svg><span data-i18n="mo_eyebrow"></span></div>
+      <h1 class="page-head__title">
+        <span class="line"><span style="--d:60ms"><span data-i18n="mo_title_a"></span> <span class="serif" data-i18n="mo_title_b"></span></span></span>
+      </h1>
+      <p class="page-head__sub" data-reveal style="--d:150ms" data-i18n="mo_sub"></p>
     </div>
+  </header>
+
+  <div class="pipeline">
+    {% set steps = [("i-layers", "p1"), ("i-sparkle", "p2"), ("i-sliders", "p3"), ("i-file", "p4"), ("i-shield", "p5")] %}
+    {% for icon, key in steps %}
+    <div class="pipe" data-reveal style="--d:{{ loop.index0 * 70 }}ms">
+      <span class="icon-chip"><svg class="icon"><use href="#{{ icon }}"/></svg></span>
+      <div class="pipe__num"></div>
+      <div class="pipe__title" data-i18n="{{ key }}_t"></div>
+      <div class="pipe__text" data-i18n="{{ key }}_d"></div>
+    </div>
+    {% endfor %}
   </div>
+
+  <section class="section">
+    <div class="section__head">
+      <div class="section__title" data-i18n="metrics_title"></div>
+      <div class="section__sub" data-i18n="metrics_sub"></div>
+    </div>
+    <div class="metric-grid">
+      {% set metrics = [
+        ("AUC", "0.762", "0.763", "bench_min", "0.65", "tip_auc"),
+        ("Gini", "0.524", "0.526", "bench_min", "0.30", "tip_gini"),
+        ("KS", "0.399", None, "bench_min", "0.20", "tip_ks"),
+        ("PSI", "0.0001", None, "bench_max", "0.10", "tip_psi"),
+      ] %}
+      {% for name, oot, train, bench, bv, tip in metrics %}
+      <div class="metric" data-reveal style="--d:{{ loop.index0 * 60 }}ms" data-tilt="5">
+        <div class="metric__head">
+          <span class="metric__name">{{ name }} <span class="tip-icon" tabindex="0" data-i18n-attr="data-tip:{{ tip }}"><svg class="icon"><use href="#i-info"/></svg></span></span>
+          <span class="badge badge--good badge--plain"><svg class="icon icon--sm" style="width:12px;height:12px;stroke-width:2.4"><use href="#i-check"/></svg></span>
+        </div>
+        <div class="metric__value">{{ oot }}</div>
+        <div class="metric__bench">
+          <span data-i18n="{{ bench }}" data-i18n-vars='{"x":"{{ bv }}"}'></span>
+          {% if train %}<span class="mono">train {{ train }}</span>{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="grid-2 grid-2--even">
+      <div class="card" data-reveal>
+        <div class="card__head">
+          <div><div class="card__title" data-i18n="compare_title"></div><div class="card__sub" data-i18n="compare_sub"></div></div>
+        </div>
+        <div class="card__body">
+          <table class="compare">
+            <thead><tr><th data-i18n="col_model"></th><th class="num" data-i18n="col_auc_train"></th><th class="num" data-i18n="col_auc_oot"></th><th class="num" data-i18n="col_ks"></th><th class="num" data-i18n="col_gini"></th></tr></thead>
+            <tbody>
+              <tr><td class="muted" data-i18n="m_dummy"></td><td class="num muted">0.500</td><td class="num muted">0.502</td><td class="num muted">0.003</td><td class="num muted">0.003</td></tr>
+              <tr class="is-selected"><td><span data-i18n="m_lr_name"></span> <span class="badge badge--accent" style="margin-left:6px" data-i18n="selected"></span></td><td class="num">0.763</td><td class="num">0.762</td><td class="num">0.399</td><td class="num">0.524</td></tr>
+              <tr><td data-i18n="m_lgbm_name"></td><td class="num">0.825</td><td class="num">0.772</td><td class="num">0.409</td><td class="num">0.543</td></tr>
+            </tbody>
+          </table>
+          <div class="note" style="margin-top:18px;background:var(--surface-2)">
+            <svg class="icon"><use href="#i-info"/></svg>
+            <div><strong data-i18n="why_title" style="display:block;color:var(--ink);margin-bottom:2px"></strong><span data-i18n="why_text"></span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" data-reveal style="--d:80ms">
+        <div class="card__head">
+          <div><div class="card__title" data-i18n="scaling_title"></div><div class="card__sub" data-i18n="scaling_sub"></div></div>
+        </div>
+        <div class="card__body">
+          <div class="formula">
+            <b>Score</b> = Offset − Factor · ln(PD / (1 − PD))<br>
+            <b>Factor</b> = PDO / ln 2 = 20 / 0.693 = <b>28.85</b><br>
+            <b>Offset</b> = 600 − Factor · ln 19 = <b>515.05</b><br>
+            <b>Points<sub>i</sub></b> = −Factor · β<sub>i</sub> · WoE<sub>i</sub> + (Offset − Factor · β<sub>0</sub>) / 56
+          </div>
+          <div class="section__title" style="font-size:15px;margin:22px 0 6px" data-i18n="bands_table_title"></div>
+          <table class="compare">
+            <thead><tr><th data-i18n="col_range"></th><th data-i18n="col_action"></th><th class="num" data-i18n="col_dr"></th><th class="num" data-i18n="col_share"></th></tr></thead>
+            <tbody id="policy"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="card" data-reveal>
+      <div class="card__head" style="flex-wrap:wrap">
+        <div><div class="card__title" data-i18n="iv_title"></div><div class="card__sub" data-i18n="iv_sub"></div></div>
+        <div class="search">
+          <svg class="icon"><use href="#i-search"/></svg>
+          <input class="input" type="search" id="iv-search" data-i18n-attr="placeholder:iv_search" autocomplete="off" />
+        </div>
+      </div>
+      <div class="card__body">
+        <div class="legend" id="iv-legend" style="margin-bottom:10px"></div>
+        <div class="iv-list" id="iv-list">
+          <div class="skeleton" style="height:320px"></div>
+        </div>
+        <button type="button" class="btn btn--ghost btn--sm" id="iv-more" style="margin-top:10px" hidden></button>
+      </div>
+    </div>
+  </section>
 </div>
+{% endblock %}
 
-<div class="card" style="margin-bottom:16px">
-  <div class="section-title" data-i18n="bands_title"></div>
-  <table class="hist-table">
-    <thead>
-      <tr>
-        <th data-i18n="col_range"></th>
-        <th data-i18n="col_band"></th>
-        <th data-i18n="col_action2"></th>
-        <th data-i18n="col_desc"></th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr><td>&lt; 520</td><td style="color:var(--error)" data-i18n-band="very_high">Very High</td><td style="color:var(--error);font-weight:600">REJECT</td><td style="color:var(--muted)" data-i18n-desc="desc_reject">High default risk</td></tr>
-      <tr><td>520 – 559</td><td style="color:var(--error)" data-i18n-band="high">High</td><td style="color:var(--warning);font-weight:600">MANUAL REVIEW</td><td style="color:var(--muted)" data-i18n-desc="desc_manual">Requires underwriting</td></tr>
-      <tr><td>560 – 599</td><td style="color:var(--warning)" data-i18n-band="medium">Medium</td><td style="color:var(--warning);font-weight:600">CONDITIONAL APPROVE</td><td style="color:var(--muted)" data-i18n-desc="desc_cond">Approve with conditions</td></tr>
-      <tr><td>600 – 639</td><td style="color:var(--primary)" data-i18n-band="low">Low</td><td style="color:var(--primary);font-weight:600">APPROVE</td><td style="color:var(--muted)" data-i18n-desc="desc_approve">Standard terms</td></tr>
-      <tr><td>≥ 640</td><td style="color:var(--primary)" data-i18n-band="very_low">Very Low</td><td style="color:var(--primary);font-weight:600">APPROVE + BEST RATE</td><td style="color:var(--muted)" data-i18n-desc="desc_best">Best interest rate</td></tr>
-    </tbody>
-  </table>
-</div>
-
-<div class="card">
-  <div class="section-title"><span data-i18n="feat_title"></span> <span id="feat-count" style="color:var(--primary)"></span> ──</div>
-  <div id="features-list" style="color:var(--muted);font-size:12px" data-i18n="loading_feat"></div>
-</div>
-
-<script>
-const BAND_TRANSLATIONS = {
-  en: { very_high:'Very High', high:'High', medium:'Medium', low:'Low', very_low:'Very Low',
-        desc_reject:'High default risk', desc_manual:'Requires underwriting',
-        desc_cond:'Approve with conditions', desc_approve:'Standard terms', desc_best:'Best interest rate' },
-  az: { very_high:'Çox Yüksək', high:'Yüksək', medium:'Orta', low:'Aşağı', very_low:'Çox Aşağı',
-        desc_reject:'Yüksək defolt riski', desc_manual:'Sığortaçı tələb olunur',
-        desc_cond:'Şərtlərlə təsdiq', desc_approve:'Standart şərtlər', desc_best:'Ən yaxşı faiz dərəcəsi' }
-};
-
-function applyBandTranslations() {
-  const bt = BAND_TRANSLATIONS[currentLang] || BAND_TRANSLATIONS.en;
-  document.querySelectorAll('[data-i18n-band]').forEach(el => {
-    el.textContent = bt[el.getAttribute('data-i18n-band')] || el.textContent;
-  });
-  document.querySelectorAll('[data-i18n-desc]').forEach(el => {
-    el.textContent = bt[el.getAttribute('data-i18n-desc')] || el.textContent;
-  });
-}
-
-document.addEventListener('DOMContentLoaded', async () => {
-  applyBandTranslations();
-  try {
-    const res = await fetch('/features');
-    const data = await res.json();
-    document.getElementById('feat-count').textContent = `(${data.count})`;
-    document.getElementById('features-list').innerHTML = data.features
-      .map(f => `<span style="display:inline-block;margin:3px 6px 3px 0;padding:2px 8px;border:1px solid var(--border);border-radius:3px;color:var(--primary);font-size:11px">${f}</span>`)
-      .join('');
-  } catch {
-    document.getElementById('features-list').setAttribute('data-i18n','loading_feat');
-    applyTranslations();
-  }
-});
-
-document.addEventListener('langchange', () => { applyTranslations(); applyBandTranslations(); });
-</script>
+{% block scripts %}
+<script type="module" src="/static/js/pages/model.js?v={{ app_version }}"></script>
 {% endblock %}

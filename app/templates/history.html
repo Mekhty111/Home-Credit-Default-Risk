@@ -1,65 +1,96 @@
 {% extends "base.html" %}
-{% block title %}History{% endblock %}
+{% block title %}Decisions{% endblock %}
 {% block content %}
+<div class="container">
+  <header class="page-head">
+    <div>
+      <div class="page-head__eyebrow" data-reveal><svg class="icon icon--sm"><use href="#i-list"/></svg><span data-i18n="hi_eyebrow"></span></div>
+      <h1 class="page-head__title">
+        <span class="line"><span style="--d:60ms"><span data-i18n="hi_title_a"></span> <span class="serif" data-i18n="hi_title_b"></span></span></span>
+      </h1>
+      <p class="page-head__sub" data-reveal style="--d:150ms" data-i18n="hi_sub"></p>
+    </div>
+    <div class="page-head__actions" data-reveal style="--d:200ms">
+      <button type="button" class="btn" id="export-btn"><svg class="icon"><use href="#i-download"/></svg><span data-i18n="btn_export"></span></button>
+      <button type="button" class="btn btn--danger" id="clear-btn"><svg class="icon"><use href="#i-trash"/></svg><span data-i18n="btn_clear"></span></button>
+    </div>
+  </header>
 
-<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-  <div class="section-title" data-i18n="history_title"></div>
-  <button onclick="clearHist()" style="font-family:inherit;font-size:11px;color:var(--error);background:none;border:1px solid var(--error);border-radius:4px;padding:4px 12px;cursor:pointer;opacity:.7" data-i18n="clear_all"></button>
+  <div class="summary-strip" data-reveal>
+    <div class="stat"><div class="stat__label" data-i18n="st_total"></div><div class="stat__value serif" id="sum-total">0</div></div>
+    <div class="stat"><div class="stat__label" data-i18n="st_approval"></div><div class="stat__value serif" id="sum-approval">—</div></div>
+    <div class="stat"><div class="stat__label" data-i18n="st_rejected"></div><div class="stat__value serif" id="sum-rejected">0</div></div>
+    <div class="stat"><div class="stat__label" data-i18n="st_avg"></div><div class="stat__value serif" id="sum-avg">—</div></div>
+  </div>
+
+  <section class="card section" data-reveal style="--d:80ms;overflow:hidden">
+    <div class="filters">
+      <div class="segmented" role="radiogroup" id="filter">
+        <input type="radio" name="f" id="f-all" value="all" checked /><label for="f-all"><span data-i18n="f_all"></span></label>
+        <input type="radio" name="f" id="f-approved" value="approved" /><label for="f-approved"><span data-i18n="f_approved"></span></label>
+        <input type="radio" name="f" id="f-review" value="review" /><label for="f-review"><span data-i18n="f_review"></span></label>
+        <input type="radio" name="f" id="f-rejected" value="rejected" /><label for="f-rejected"><span data-i18n="f_rejected"></span></label>
+      </div>
+      <div class="search">
+        <svg class="icon"><use href="#i-search"/></svg>
+        <input class="input" type="search" id="search" data-i18n-attr="placeholder:search_placeholder" autocomplete="off" />
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th data-i18n="col_id"></th>
+            <th data-i18n="col_time"></th>
+            <th data-i18n="col_score"></th>
+            <th data-i18n="col_band"></th>
+            <th data-i18n="col_decision"></th>
+            <th class="num" data-i18n="col_pd_lr"></th>
+            <th class="num" data-i18n="col_pd_lgbm"></th>
+            <th aria-hidden="true"></th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div id="empty"></div>
+  </section>
 </div>
 
-<div class="card" style="padding:0;overflow:hidden">
-  <div style="overflow-x:auto">
-    <table class="hist-table">
-      <thead>
-        <tr>
-          <th data-i18n="col_id"></th>
-          <th data-i18n="col_timestamp"></th>
-          <th data-i18n="col_score"></th>
-          <th data-i18n="col_risk"></th>
-          <th data-i18n="col_action"></th>
-          <th data-i18n="col_lr"></th>
-          <th data-i18n="col_lgbm"></th>
-        </tr>
-      </thead>
-      <tbody id="hist-body"></tbody>
-    </table>
+<div class="overlay" id="overlay"></div>
+
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title">
+  <div class="drawer__head">
+    <div>
+      <div class="mono" id="drawer-title" style="font-weight:500"></div>
+      <div class="card__sub" id="drawer-time"></div>
+    </div>
+    <button type="button" class="icon-btn" id="drawer-close" data-i18n-attr="aria-label:dr_close"><svg class="icon"><use href="#i-x"/></svg></button>
+  </div>
+  <div class="drawer__body">
+    <div class="card decision" id="drawer-decision" style="box-shadow:none"></div>
+    <div class="section">
+      <div class="section__title" style="font-size:15px;margin-bottom:12px" data-i18n="dr_inputs"></div>
+      <dl class="kv" id="drawer-inputs"></dl>
+    </div>
+  </div>
+  <div class="drawer__foot">
+    <button type="button" class="btn btn--sm" id="drawer-copy"><svg class="icon"><use href="#i-copy"/></svg><span data-i18n="btn_copy_json"></span></button>
+    <a class="btn btn--sm btn--primary" id="drawer-open"><span data-i18n="dr_open"></span><svg class="icon arrow"><use href="#i-arrow-right"/></svg></a>
+  </div>
+</aside>
+
+<div class="modal" id="modal" role="alertdialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal__icon"><svg class="icon icon--lg"><use href="#i-trash"/></svg></div>
+  <div class="modal__title" id="modal-title" data-i18n="modal_clear_title"></div>
+  <p class="modal__text" id="modal-text"></p>
+  <div class="modal__actions">
+    <button type="button" class="btn" id="modal-cancel" data-i18n="btn_cancel"></button>
+    <button type="button" class="btn btn--primary" id="modal-confirm" style="--btn-bg:var(--bad);--btn-fg:#fff" data-i18n="btn_confirm_clear"></button>
   </div>
 </div>
+{% endblock %}
 
-<script>
-function renderHistory() {
-  const h = Storage.getHistory();
-  const tbody = document.getElementById('hist-body');
-  if (!h.length) {
-    tbody.innerHTML = `<tr><td colspan="7" style="color:var(--faint);padding:32px;text-align:center">
-      <span data-i18n="no_history"></span>
-      <a href="/ui/score" style="color:var(--primary)" data-i18n="run_first"></a>
-    </td></tr>`;
-    applyTranslations();
-    return;
-  }
-  tbody.innerHTML = h.map((e, i) => {
-    const ac = actionColor(e.action);
-    const rc = riskColor(e.risk_band);
-    return `<tr>
-      <td style="color:var(--faint)">${String(i+1).padStart(4,'0')}</td>
-      <td style="color:var(--muted)">${e.timestamp||'—'}</td>
-      <td style="font-weight:700;color:${rc}">${e.score}</td>
-      <td style="color:${rc}">${e.risk_band}</td>
-      <td style="font-weight:600;color:${ac}">${e.action}</td>
-      <td>${(e.lr_probability*100).toFixed(2)}%</td>
-      <td>${(e.lgbm_probability*100).toFixed(2)}%</td>
-    </tr>`;
-  }).join('');
-}
-
-function clearHist() {
-  if (!confirm('Clear all history?')) return;
-  Storage.clearHistory();
-  renderHistory();
-}
-
-document.addEventListener('DOMContentLoaded', renderHistory);
-document.addEventListener('langchange', () => { applyTranslations(); renderHistory(); });
-</script>
+{% block scripts %}
+<script type="module" src="/static/js/pages/history.js?v={{ app_version }}"></script>
 {% endblock %}

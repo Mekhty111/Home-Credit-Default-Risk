@@ -1,552 +1,180 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Precision Dark — {% block title %}{% endblock %}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500&display=swap" rel="stylesheet">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>{% block title %}{% endblock %} · Credence</title>
+  <meta name="description" content="Credence — explainable credit risk decisioning: WoE scorecard + LightGBM benchmark trained on Home Credit Default Risk." />
+  <meta name="theme-color" content="#f4f3ef" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0b0c10" media="(prefers-color-scheme: dark)" />
+  <link rel="icon" type="image/svg+xml" href="/static/img/favicon.svg" />
 
-    :root {
-  --bg:         hsl(156,18%,4%);
-  --card:       hsl(155,14%,7%);
-  --card2:      hsl(154,12%,9%);
-  --primary:    hsl(153,65%,45%);
-  --primary-fg: hsl(156,18%,4%);
-  --text:       hsl(150,28%,84%);
-  --muted:      hsl(150,14%,46%);
-  --faint:      hsl(150,16%,22%);
-  --dim:        hsl(150,12%,32%);
-  --border:     hsl(150,16%,13%);
-  --warning:    hsl(32,90%,60%);
-  --error:      hsl(346,100%,65%);
-  --radius:     4px;
-} 
+  <script>
+    // Apply theme before first paint to avoid a flash
+    (function () {
+      try {
+        var t = localStorage.getItem('credence.theme');
+        if (!t || t === 'system') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', t);
+        var l = localStorage.getItem('credence.lang');
+        if (l) document.documentElement.lang = l;
+      } catch (e) {}
+    })();
+  </script>
 
-    html, body { height: 100%; }
-    body {
-      font-family: 'Space Mono', monospace;
-      background: var(--bg);
-      color: var(--text);
-      font-size: 13px;
-      overflow: hidden;
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/app.css?v={{ app_version }}" />
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
     }
-
-    .app-layout { display: flex; height: 100vh; width: 100vw; overflow: hidden; }
-
-    /* Sidebar */
-    .sidebar { width: 240px; min-width: 240px; height: 100vh; background: var(--card); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
-    .sidebar-logo { padding: 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
-    .sidebar-logo span { color: var(--primary); font-weight: 700; font-size: 13px; letter-spacing: .1em; }
-    .sidebar-nav { flex: 1; padding: 8px 0; }
-    .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 16px; color: var(--muted); text-decoration: none; font-size: 13px; border-left: 2px solid transparent; transition: color .15s, background .15s; }
-    .nav-item:hover { color: var(--text); background: rgba(255,255,255,.03); }
-    .nav-item.active { color: var(--primary); background: rgba(255,165,0,.06); border-left-color: var(--primary); }
-    .nav-icon { color: var(--faint); width: 20px; text-align: center; font-size: 12px; }
-    .sidebar-footer { padding: 12px 16px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 8px; color: var(--faint); font-size: 11px; }
-    .blink-dot { width: 6px; height: 6px; background: var(--primary); border-radius: 50%; animation: blink 1.4s ease-in-out infinite; }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
-
-    /* Main */
-    .main-wrapper { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
-    .terminal-header { height: 40px; border-bottom: 1px solid var(--border); background: var(--card); display: flex; align-items: center; padding: 0 20px; gap: 16px; flex-shrink: 0; }
-    .header-title { color: var(--muted); font-size: 12px; letter-spacing:.08em; }
-    .header-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
-    .header-status { color: var(--dim); font-size: 11px; }
-    .header-status .dot { color: var(--primary); }
-
-    /* Language toggle */
-    .lang-toggle { display: flex; gap: 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-    .lang-btn { padding: 3px 8px; font-family: 'Space Mono', monospace; font-size: 10px; font-weight: 700; letter-spacing: .08em; background: none; border: none; color: var(--muted); cursor: pointer; transition: color .15s, background .15s; }
-    .lang-btn.active { background: var(--primary); color: var(--primary-fg); }
-    .lang-btn:not(.active):hover { color: var(--text); background: rgba(255,255,255,.04); }
-
-    .main-content { flex:1; overflow-y:auto; }
-
-    /* Prediction Panel */
-    .prediction-panel { width: 320px; min-width: 320px; height: 100vh; background: var(--card); border-left: 1px solid var(--border); display: flex; flex-direction: column; }
-    .panel-header { padding: 8px 16px; border-bottom: 1px solid var(--border); color: var(--primary); font-size: 12px; letter-spacing: .1em; }
-    .panel-body { flex:1; padding:16px; overflow-y:auto; font-size:12px; }
-
-    /* Cards */
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
-    .card.scanlines { background-image: repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(255,180,50,.02) 19px, rgba(255,180,50,.02) 20px); }
-    .section-title { color: var(--dim); font-size: 11px; margin-bottom: 10px; letter-spacing: .06em; }
-
-    /* Tabs */
-    .tabs { display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:16px; }
-    .tab-btn { padding: 8px 16px; font-family: 'Space Mono', monospace; font-size: 12px; letter-spacing: .1em; background: none; border: none; border-bottom: 2px solid transparent; color: var(--muted); cursor: pointer; transition: color .15s; }
-    .tab-btn:hover { color: var(--text); }
-    .tab-btn.active { border-bottom-color: var(--primary); color: var(--text); }
-    .tab-pane { display:none; }
-    .tab-pane.active { display:block; }
-
-    /* Form fields */
-    .field-row { display: flex; align-items: center; font-size: 13px; margin-bottom: 8px; }
-    .field-prompt { color: var(--muted); margin-right: 4px; }
-    .field-label { color: var(--faint); white-space: nowrap; }
-    .field-input { background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--primary); font-family: 'Space Mono', monospace; font-size: 13px; width: 120px; padding: 2px 6px; outline: none; transition: border-color .15s; }
-    .field-input:focus { border-bottom-color: var(--primary); }
-    .field-select { background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--primary); font-family: 'Space Mono', monospace; font-size: 13px; padding: 2px 6px; outline: none; cursor: pointer; appearance: none; -webkit-appearance: none; transition: border-color .15s; }
-    .field-select:focus { border-bottom-color: var(--primary); }
-    .field-select option { background: #1a1208; color: var(--text); }
-
-    /* Buttons */
-    .btn-primary { width: 100%; height: 44px; background: var(--primary); color: var(--primary-fg); font-family: 'Space Mono', monospace; font-weight: 700; font-size: 13px; border: none; border-radius: var(--radius); cursor: pointer; letter-spacing: .06em; transition: opacity .15s; }
-    .btn-primary:hover { opacity: .88; }
-    .btn-primary:disabled { opacity: .45; cursor: not-allowed; }
-    .btn-secondary { display: block; padding: 9px 16px; border: 1px solid var(--border); color: var(--text); font-family: 'Space Mono', monospace; font-size: 13px; border-radius: var(--radius); text-decoration: none; text-align: center; transition: background .15s; }
-    .btn-secondary:hover { background: rgba(255,255,255,.04); }
-
-    /* Stats */
-    .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
-    .stat-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; }
-    .stat-label { color:var(--faint); font-size:11px; margin-bottom:4px; letter-spacing:.06em; }
-    .stat-value { font-size:24px; font-weight:700; }
-    .c-primary { color: var(--primary); }
-    .c-error   { color: var(--error); }
-    .c-warning { color: var(--warning); }
-    .c-muted   { color: var(--muted); }
-    .c-text    { color: var(--text); }
-
-    /* Table */
-    .hist-table { width:100%; border-collapse:collapse; font-size:12px; }
-    .hist-table th { text-align:left; padding:8px 12px; color:var(--dim); font-weight:500; border-bottom:1px solid var(--border); font-size:11px; letter-spacing:.06em; }
-    .hist-table td { padding:8px 12px; border-bottom:1px solid rgba(255,255,255,.04); }
-    .hist-table tr:hover td { background:rgba(255,255,255,.02); }
-
-    /* Score bar */
-    .score-bar-track { width:100%; height:4px; background:var(--border); border-radius:2px; margin:4px 0 2px; }
-    .score-bar-fill  { height:4px; border-radius:2px; transition:width .8s cubic-bezier(.4,0,.2,1); }
-    .score-labels { display:flex; justify-content:space-between; color:var(--faint); font-size:10px; }
-
-    /* Result panel */
-    .result-line { display:flex; justify-content:space-between; margin-bottom:6px; }
-    .result-key  { color:var(--faint); }
-    .result-val  { font-weight:500; }
-    .prob-bar-track { width:100%; height:3px; background:var(--border); border-radius:2px; margin-top:3px; }
-    .prob-bar-fill  { height:3px; border-radius:2px; background:var(--primary); transition:width .6s ease; }
-
-    .tw-lines { font-size:12px; color:var(--dim); line-height:1.8; }
-    .blink-cursor::after { content:'█'; color:var(--primary); animation: blink 1s step-end infinite; }
-    .page-enter { animation: fadeIn .3s ease; }
-    @keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
-
-    ::-webkit-scrollbar { width:6px; }
-    ::-webkit-scrollbar-track { background:transparent; }
-    ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
-
-    #toast-container { position: fixed; bottom:20px; right:340px; display:flex; flex-direction:column; gap:8px; z-index:9999; }
-    .toast { background:var(--card2); border:1px solid var(--border); border-radius:var(--radius); padding:10px 16px; font-size:12px; color:var(--text); animation: slideIn .2s ease; max-width:320px; }
-    .toast.error { border-color:var(--error); color:var(--error); }
-    @keyframes slideIn { from{opacity:0;transform:translateX(16px)} to{opacity:1;transform:translateX(0)} }
-    p { color: var(--muted); line-height:1.7; max-width:60ch; }
-  </style>
+  </script>
 </head>
-<body>
-<div class="app-layout">
+<body data-page="{{ page }}">
 
-  <!-- Sidebar -->
-  <aside class="sidebar">
-    <div class="sidebar-logo">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-        <rect x="2" y="2" width="20" height="20" rx="2" stroke="var(--primary)" stroke-width="1.5"/>
-        <path d="M7 12l3 3 7-7" stroke="var(--primary)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<!-- Icon sprite -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></symbol>
+    <symbol id="i-cpu" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/><path d="M9 9h6v6H9zM9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
+    <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-arrow-up-right" viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-14"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 15.5-6.3L21 8M21 3v5h-5M21 12a9 9 0 0 1-15.5 6.3L3 16M3 21v-5h5"/></symbol>
+    <symbol id="i-code" viewBox="0 0 24 24"><path d="m8 7-5 5 5 5M16 7l5 5-5 5"/></symbol>
+    <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+    <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h13v4"/><path d="M3 7v11a2 2 0 0 0 2 2h15V9H5a2 2 0 0 1-2-2z"/><circle cx="16" cy="14.5" r="1.2"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></symbol>
+    <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+    <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/></symbol>
+    <symbol id="i-github" viewBox="0 0 24 24"><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
+  </defs>
+</svg>
+
+<a class="skip-link" href="#main" data-i18n="skip_to_content">Skip to content</a>
+
+<div class="backdrop" aria-hidden="true">
+  <div class="backdrop__glow"></div>
+  <div class="backdrop__grid"></div>
+</div>
+
+<header class="topbar" id="topbar">
+  <div class="topbar__inner container">
+    <a href="/ui" class="brand" aria-label="Credence — home">
+      <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true">
+        <defs>
+          <linearGradient id="brandGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="var(--accent)"/>
+            <stop offset="1" stop-color="var(--accent-2)"/>
+          </linearGradient>
+        </defs>
+        <rect x="1" y="1" width="30" height="30" rx="9" fill="url(#brandGrad)"/>
+        <path d="M22.5 11.2a8 8 0 1 0 0 9.6" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/>
+        <circle cx="22.6" cy="16" r="2.1" fill="#fff"/>
       </svg>
-      <span>Precision Dark</span>
-    </div>
-    <nav class="sidebar-nav">
-      {% set nav = [
-        ("/ui",         "[/]",  "nav_dashboard"),
-        ("/ui/score",   "[>_]", "nav_score"),
-        ("/ui/history", "[≡]",  "nav_history"),
-        ("/ui/model",   "[◈]",  "nav_model"),
-      ] %}
-      {% for path, icon, key in nav %}
-      <a href="{{ path }}" class="nav-item {% if request.url.path == path %}active{% endif %}">
-        <span class="nav-icon">{{ icon }}</span>
-        <span data-i18n="{{ key }}"></span>
+      <span class="brand__name">Credence</span>
+      <span class="brand__tag">Risk Engine</span>
+    </a>
+
+    {% set nav = [
+      ("/ui",         "overview", "i-home",  "nav_overview"),
+      ("/ui/score",   "score",    "i-plus",  "nav_score"),
+      ("/ui/history", "history",  "i-list",  "nav_history"),
+      ("/ui/model",   "model",    "i-cpu",   "nav_model"),
+    ] %}
+    <nav class="nav" id="nav" aria-label="Primary">
+      <span class="nav__hover" aria-hidden="true"></span>
+      <span class="nav__indicator" aria-hidden="true"></span>
+      {% for path, key, icon, label in nav %}
+      <a href="{{ path }}" class="nav__link{% if page == key %} is-active{% endif %}" {% if page == key %}aria-current="page"{% endif %}>
+        <svg class="icon"><use href="#{{ icon }}"/></svg>
+        <span data-i18n="{{ label }}"></span>
+        {% if key == 'history' %}<span class="nav__count" id="nav-history-count" hidden></span>{% endif %}
       </a>
       {% endfor %}
     </nav>
-    <div class="sidebar-footer">
-      <span data-i18n="api_live"></span>
-      <span class="blink-dot"></span>
-    </div>
-  </aside>
 
-  <!-- Main -->
-  <div class="main-wrapper">
-    <header class="terminal-header">
-      <span class="header-title">&gt; <span data-i18n="{{ self.title() | lower }}"></span></span>
-      <div class="header-right">
-        <span class="header-status"><span class="dot">●</span> localhost:8000</span>
-        <div class="lang-toggle">
-          <button class="lang-btn" id="btn-en" onclick="setLang('en')">EN</button>
-          <button class="lang-btn" id="btn-az" onclick="setLang('az')">AZ</button>
-          <button class="lang-btn" id="btn-ru" onclick="setLang('ru')">RU</button>
+    <div class="topbar__actions">
+      <div class="status" id="api-status" data-state="pending" title="">
+        <span class="status__dot"></span>
+        <span class="status__label" data-i18n="status_checking"></span>
+        <span class="status__latency mono" id="api-latency"></span>
+      </div>
+
+      <div class="menu" id="lang-menu">
+        <button class="icon-btn" type="button" aria-haspopup="menu" aria-expanded="false" id="lang-btn" data-i18n-attr="aria-label:change_language">
+          <svg class="icon"><use href="#i-globe"/></svg>
+          <span class="icon-btn__text mono" id="lang-current">EN</span>
+        </button>
+        <div class="menu__list" role="menu">
+          <button role="menuitemradio" data-lang="en"><span>English</span><span class="mono">EN</span></button>
+          <button role="menuitemradio" data-lang="ru"><span>Русский</span><span class="mono">RU</span></button>
+          <button role="menuitemradio" data-lang="az"><span>Azərbaycanca</span><span class="mono">AZ</span></button>
         </div>
       </div>
-    </header>
-    <main class="main-content">
-      <div class="page-enter" style="padding:24px">
-        {% block content %}{% endblock %}
-      </div>
-    </main>
+
+      <button class="icon-btn theme-toggle" type="button" id="theme-btn" data-i18n-attr="aria-label:toggle_theme">
+        <svg class="icon icon--sun"><use href="#i-sun"/></svg>
+        <svg class="icon icon--moon"><use href="#i-moon"/></svg>
+      </button>
+    </div>
   </div>
+</header>
 
-  <!-- Prediction Panel -->
-  <aside class="prediction-panel">
-    <div class="panel-header">&gt; <span data-i18n="prediction_output"></span></div>
-    <div class="panel-body" id="prediction-panel-body">
-      <span class="blink-cursor" style="color:var(--faint);font-size:12px" data-i18n="awaiting_input"></span>
+<main id="main" class="main">
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="footer">
+  <div class="container footer__inner">
+    <div class="footer__left">
+      <span class="brand__name">Credence</span>
+      <span class="footer__muted">v{{ app_version }} · <span data-i18n="footer_tagline"></span></span>
     </div>
-  </aside>
+    <div class="footer__links">
+      <a href="/docs" target="_blank" rel="noopener"><svg class="icon"><use href="#i-code"/></svg> <span data-i18n="api_docs"></span></a>
+      <a href="https://github.com/Mekhty111/Home-Credit-Default-Risk" target="_blank" rel="noopener"><svg class="icon"><use href="#i-github"/></svg> GitHub</a>
+    </div>
+  </div>
+</footer>
 
-</div>
+<!-- Mobile tab bar -->
+<nav class="tabbar" aria-label="Primary">
+  {% for path, key, icon, label in nav %}
+  <a href="{{ path }}" class="tabbar__link{% if page == key %} is-active{% endif %}">
+    <svg class="icon"><use href="#{{ icon }}"/></svg>
+    <span data-i18n="{{ label }}_short"></span>
+  </a>
+  {% endfor %}
+</nav>
 
-<div id="toast-container"></div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
 
-<script>
-// ── i18n ──────────────────────────────────────────────────────────────────
-const TRANSLATIONS = {
-  en: {
-    nav_dashboard:      "Dashboard",
-    nav_score:          "Score Client",
-    nav_history:        "History",
-    nav_model:          "Model Info",
-    api_live:           "API LIVE",
-    prediction_output:  "PREDICTION OUTPUT",
-    awaiting_input:     "Awaiting input...",
-    system_dashboard:   "> SYSTEM DASHBOARD",
-    total_scored:       "TOTAL SCORED",
-    approved:           "APPROVED",
-    rejected:           "REJECTED",
-    avg_score:          "AVG SCORE",
-    quick_actions:      "── QUICK ACTIONS ──────────────────────",
-    btn_run:            "▶  RUN SCORING MODEL",
-    btn_history:        "≡  VIEW HISTORY",
-    system_status:      "── SYSTEM STATUS ──────────────────────",
-    score_page_title:   "> SCORE CLIENT",
-    tab_input:          "[INPUT]",
-    tab_json:           "[RAW JSON]",
-    hc_params:          "┌─ HOME CREDIT APPLICATION PARAMETERS ─────────────────────────┐",
-    section_ext:        "── EXTERNAL SOURCES ─────────────────────────",
-    section_applicant:  "── APPLICANT INFO ──────────────────────────────",
-    section_financial:  "── FINANCIAL ───────────────────────────────────",
-    section_profile:    "── PROFILE ─────────────────────────────────────",
-    processing:         "█ PROCESSING...",
-    history_title:      "> SCORING HISTORY",
-    clear_all:          "CLEAR ALL",
-    col_id:             "#",
-    col_timestamp:      "TIMESTAMP",
-    col_score:          "SCORE",
-    col_risk:           "RISK BAND",
-    col_action:         "ACTION",
-    col_lr:             "LR PROB",
-    col_lgbm:           "LGBM PROB",
-    no_history:         "No scoring history yet.",
-    run_first:          "Run first score →",
-    model_title:        "> MODEL INFORMATION",
-    arch_title:         "── ARCHITECTURE ─────────────────────────────",
-    bands_title:        "── RISK BANDS ────────────────────────────────",
-    feat_title:         "── MODEL FEATURES",
-    col_range:          "SCORE RANGE",
-    col_band:           "RISK BAND",
-    col_action2:        "ACTION",
-    col_desc:           "DESCRIPTION",
-    loading_feat:       "Loading from API...",
-    scorecard_label:    "  Scorecard:",
-    risk_band_label:    "  Risk band:",
-    prob_title:         "  ─── MODEL PROBABILITIES ─────────",
-    lr_label:           "  LR (scorecard):",
-    lgbm_label:         "  LightGBM:",
-    prob_note:          "  P(default) — lower is better",
-    result_title:       "┌─ SCORING RESULT ─────────────────┐",
-    result_end:         "└──────────────────────────────────┘",
-    loading_line1:      "> Connecting to scoring engine...",
-    loading_line2:      "> WoE transform... ██████████ 100%",
-    loading_line3:      "> Running LR + LGBM inference...",
-  },
-  ru: {
-    nav_dashboard:      "Дашборд",
-    nav_score:          "Скоринг клиента",
-    nav_history:        "История",
-    nav_model:          "О модели",
-    api_live:           "API АКТИВЕН",
-    prediction_output:  "РЕЗУЛЬТАТ ПРОГНОЗА",
-    awaiting_input:     "Ожидание ввода...",
-    system_dashboard:   "> СИСТЕМНАЯ ПАНЕЛЬ",
-    total_scored:       "ВСЕГО ОЦЕНЕНО",
-    approved:           "ОДОБРЕНО",
-    rejected:           "ОТКЛОНЕНО",
-    avg_score:          "СРЕДНИЙ БАЛЛ",
-    quick_actions:      "── БЫСТРЫЕ ДЕЙСТВИЯ ──────────────────",
-    btn_run:            "▶  ЗАПУСТИТЬ МОДЕЛЬ",
-    btn_history:        "≡  ИСТОРИЯ",
-    system_status:      "── СОСТОЯНИЕ СИСТЕМЫ ──────────────────",
-    score_page_title:   "> СКОРИНГ КЛИЕНТА",
-    tab_input:          "[ФОРМА]",
-    tab_json:           "[XAM JSON]",
-    hc_params:          "┌─ ПАРАМЕТРЫ ЗАЯВКИ ────────────────────────────────────────────┐",
-    section_ext:        "── ВНЕШНИЕ ИСТОЧНИКИ ─────────────────────",
-    section_applicant:  "── ДАННЫЕ ЗАЯВИТЕЛЯ ──────────────────────",
-    section_financial:  "── ФИНАНСЫ ───────────────────────────────",
-    section_profile:    "── ПРОФИЛЬ ───────────────────────────────",
-    processing:         "█ ОБРАБОТКА...",
-    history_title:      "> ИСТОРИЯ СКОРИНГА",
-    clear_all:          "ОЧИСТИТЬ ВСЁ",
-    col_id:             "#",
-    col_timestamp:      "ВРЕМЯ",
-    col_score:          "БАЛЛ",
-    col_risk:           "РИСК-ЗОНА",
-    col_action:         "РЕШЕНИЕ",
-    col_lr:             "LR ВЕРОЯТН.",
-    col_lgbm:           "LGBM ВЕРОЯТН.",
-    no_history:         "История скоринга пуста.",
-    run_first:          "Запустить первый скоринг →",
-    model_title:        "> ИНФОРМАЦИЯ О МОДЕЛИ",
-    arch_title:         "── АРХИТЕКТУРА ──────────────────────────",
-    bands_title:        "── РИСК-ЗОНЫ ────────────────────────────",
-    feat_title:         "── ПРИЗНАКИ МОДЕЛИ",
-    col_range:          "ДИАПАЗОН",
-    col_band:           "РИСК-ЗОНА",
-    col_action2:        "РЕШЕНИЕ",
-    col_desc:           "ОПИСАНИЕ",
-    loading_feat:       "Загрузка из API...",
-    scorecard_label:    "  Балл скоркарты:",
-    risk_band_label:    "  Риск-зона:",
-    prob_title:         "  ─── ВЕРОЯТНОСТИ МОДЕЛИ ─────────────",
-    lr_label:           "  LR (скоркарта):",
-    lgbm_label:         "  LightGBM:",
-    prob_note:          "  P(дефолт) — меньше лучше",
-    result_title:       "┌─ РЕЗУЛЬТАТ СКОРИНГА ──────────────────┐",
-    result_end:         "└──────────────────────────────────────┘",
-    loading_line1:      "> Подключение к скоринг-движку...",
-    loading_line2:      "> WoE-преобразование... ██████████ 100%",
-    loading_line3:      "> Инференс LR + LGBM...",
-  },
-  az: {
-    nav_dashboard:      "Əsas Panel",
-    nav_score:          "Müştəri Skoru",
-    nav_history:        "Tarixçə",
-    nav_model:          "Model Məlumatı",
-    api_live:           "API AKTİV",
-    prediction_output:  "PROQNOZ NƏTİCƏSİ",
-    awaiting_input:     "Giriş gözlənilir...",
-    system_dashboard:   "> SİSTEM PANELİ",
-    total_scored:       "ÜMUMI SKORED",
-    approved:           "TƏSDİQLƏNDİ",
-    rejected:           "RƏDD EDİLDİ",
-    avg_score:          "ORT. BAL",
-    quick_actions:      "── SÜRƏTLİ ƏMƏLİYYATLAR ──────────────",
-    btn_run:            "▶  SKORİNG MODELİNİ İŞLƏT",
-    btn_history:        "≡  TARİXÇƏYƏ BAX",
-    system_status:      "── SİSTEM VƏZİYYƏTİ ───────────────────",
-    score_page_title:   "> MÜŞTƏRİ SKORU",
-    tab_input:          "[GİRİŞ]",
-    tab_json:           "[XAM JSON]",
-    hc_params:          "┌─ ƏRİZƏ PARAMETRLƏRİ ─────────────────────────────────────────┐",
-    section_ext:        "── XARİCİ MƏNBƏLƏR ───────────────────────",
-    section_applicant:  "── ƏRİZƏÇİ MƏLUMATI ────────────────────────",
-    section_financial:  "── MALİYYƏ ─────────────────────────────────",
-    section_profile:    "── PROFİL ──────────────────────────────────",
-    processing:         "█ İŞLƏNİR...",
-    history_title:      "> SKORİNG TARİXÇƏSİ",
-    clear_all:          "HAMISINI SİL",
-    col_id:             "#",
-    col_timestamp:      "VAXT",
-    col_score:          "BAL",
-    col_risk:           "RİSK ZOLAĞI",
-    col_action:         "QƏRAR",
-    col_lr:             "LR EHT.",
-    col_lgbm:           "LGBM EHT.",
-    no_history:         "Skoring tarixçəsi yoxdur.",
-    run_first:          "İlk skoru işlət →",
-    model_title:        "> MODEL MƏLUMATI",
-    arch_title:         "── ARXİTEKTURA ──────────────────────────",
-    bands_title:        "── RİSK ZOLAQLARI ───────────────────────",
-    feat_title:         "── MODEL XÜSUSİYYƏTLƏRİ",
-    col_range:          "BAL ARALIĞI",
-    col_band:           "RİSK ZOLAĞI",
-    col_action2:        "QƏRAR",
-    col_desc:           "TƏSVİR",
-    loading_feat:       "API-dən yüklənir...",
-    scorecard_label:    "  Bal cədvəli:",
-    risk_band_label:    "  Risk zolaği:",
-    prob_title:         "  ─── MODEL EHTİMALLARI ──────────────",
-    lr_label:           "  LR (bal cədvəli):",
-    lgbm_label:         "  LightGBM:",
-    prob_note:          "  P(defolt) — aşağı daha yaxşıdır",
-    result_title:       "┌─ SKORİNG NƏTİCƏSİ ───────────────────┐",
-    result_end:         "└──────────────────────────────────────┘",
-    loading_line1:      "> Skoring mühərrikinə qoşulur...",
-    loading_line2:      "> WoE çevrilməsi... ██████████ 100%",
-    loading_line3:      "> LR + LGBM inferensı işlədilir...",
-  }
-};
-
-let currentLang = localStorage.getItem('pd_lang') || 'en';
-
-function t(key) {
-  return TRANSLATIONS[currentLang][key] || TRANSLATIONS['en'][key] || key;
-}
-
-function applyTranslations() {
-  document.querySelectorAll('[data-i18n]').forEach(el => {
-    const key = el.getAttribute('data-i18n');
-    const val = t(key);
-    if (val) el.textContent = val;
-  });
-  document.getElementById('btn-en').classList.toggle('active', currentLang === 'en');
-  document.getElementById('btn-az').classList.toggle('active', currentLang === 'az');
-  document.getElementById('btn-ru').classList.toggle('active', currentLang === 'ru');
-  document.documentElement.lang = currentLang;
-}
-
-function setLang(lang) {
-  currentLang = lang;
-  localStorage.setItem('pd_lang', lang);
-  applyTranslations();
-  // fire custom event so pages can react
-  document.dispatchEvent(new CustomEvent('langchange', { detail: lang }));
-}
-
-// ── Storage ───────────────────────────────────────────────────────────────
-const Storage = {
-  getHistory: () => { try { return JSON.parse(localStorage.getItem('pd_history')||'[]'); } catch { return []; } },
-  addHistory: (entry) => {
-    const h = Storage.getHistory();
-    h.unshift(entry);
-    localStorage.setItem('pd_history', JSON.stringify(h.slice(0,200)));
-  },
-  getLastResult: () => { try { return JSON.parse(localStorage.getItem('pd_last')||'null'); } catch { return null; } },
-  setLastResult: (r) => localStorage.setItem('pd_last', JSON.stringify(r)),
-  clearHistory: () => localStorage.removeItem('pd_history'),
-};
-
-// ── Toast ─────────────────────────────────────────────────────────────────
-function toast(msg, isErr=false) {
-  const el = document.createElement('div');
-  el.className = 'toast' + (isErr ? ' error' : '');
-  el.textContent = msg;
-  document.getElementById('toast-container').appendChild(el);
-  setTimeout(() => el.remove(), 3500);
-}
-
-// ── Prediction Panel ──────────────────────────────────────────────────────
-function riskColor(band) {
-  if (!band) return 'var(--text)';
-  if (band==='Very Low'||band==='Low') return 'var(--primary)';
-  if (band==='Medium') return 'var(--warning)';
-  return 'var(--error)';
-}
-function actionColor(action) {
-  if (!action) return 'var(--text)';
-  if (action.startsWith('APPROVE')) return 'var(--primary)';
-  if (action==='MANUAL REVIEW'||action==='CONDITIONAL APPROVE') return 'var(--warning)';
-  return 'var(--error)';
-}
-function scoreBarPct(score) { return Math.min(100, Math.max(0, ((score-400)/(800-400))*100)); }
-function scoreBarColor(score) {
-  if (score>=640) return 'var(--primary)';
-  if (score>=600) return 'rgba(255,180,50,.65)';
-  if (score>=560) return 'var(--warning)';
-  return 'var(--error)';
-}
-
-function animateCount(el, target, duration=1200) {
-  const start = performance.now();
-  function tick(now) {
-    const p = Math.min((now-start)/duration, 1);
-    const eased = 1 - Math.pow(1-p, 3);
-    el.textContent = Math.round(eased*target);
-    if (p<1) requestAnimationFrame(tick);
-  }
-  requestAnimationFrame(tick);
-}
-
-function renderPredictionPanel(result) {
-  if (!result) return;
-  const ts = new Date().toISOString().replace('T',' ').slice(0,19);
-  const pct = scoreBarPct(result.score);
-  const aColor = actionColor(result.action);
-  const rColor = riskColor(result.risk_band);
-  const html = `
-    <div style="font-size:12px;line-height:1.7">
-      <div style="color:var(--faint)">${t('result_title')}</div>
-      <div style="text-align:center;padding:10px 0">
-        <span style="font-weight:700;font-size:13px;color:${aColor}">██ ${result.action} ██</span>
-      </div>
-      <div style="margin-bottom:12px">
-        <div class="result-line">
-          <span class="result-key">${t('scorecard_label')}</span>
-          <span id="score-counter" style="color:${rColor};font-weight:700">0</span>
-        </div>
-        <div style="padding:0 8px">
-          <div class="score-bar-track">
-            <div class="score-bar-fill" id="score-bar" style="width:0%;background:${scoreBarColor(result.score)}"></div>
-          </div>
-          <div class="score-labels"><span>400</span><span>600</span><span>800</span></div>
-        </div>
-      </div>
-      <div class="result-line">
-        <span class="result-key">${t('risk_band_label')}</span>
-        <span style="color:${rColor}">${result.risk_band}</span>
-      </div>
-      <div style="color:var(--muted);font-size:11px;margin:4px 0 12px 8px;line-height:1.5">${result.interpretation}</div>
-      <div style="color:var(--faint);margin-bottom:6px">${t('prob_title')}</div>
-      <div style="margin-bottom:4px">
-        <div class="result-line">
-          <span class="result-key">${t('lr_label')}</span>
-          <span style="color:${rColor}">${(result.lr_probability*100).toFixed(2)}%</span>
-        </div>
-        <div style="padding:0 8px">
-          <div class="prob-bar-track"><div class="prob-bar-fill" style="width:${result.lr_probability*100}%;background:${rColor}"></div></div>
-        </div>
-      </div>
-      <div style="margin-bottom:12px">
-        <div class="result-line">
-          <span class="result-key">${t('lgbm_label')}</span>
-          <span style="color:${rColor}">${(result.lgbm_probability*100).toFixed(2)}%</span>
-        </div>
-        <div style="padding:0 8px">
-          <div class="prob-bar-track"><div class="prob-bar-fill" style="width:${result.lgbm_probability*100}%;background:${rColor}"></div></div>
-        </div>
-      </div>
-      <div style="color:var(--faint);font-size:11px;margin-bottom:2px">${t('prob_note')}</div>
-      <div style="padding-top:10px;color:var(--faint);font-size:11px"><div>  timestamp: ${ts}</div></div>
-      <div style="color:var(--faint)">${t('result_end')}</div>
-    </div>`;
-  document.getElementById('prediction-panel-body').innerHTML = html;
-  setTimeout(() => {
-    document.getElementById('score-bar').style.width = pct + '%';
-    animateCount(document.getElementById('score-counter'), result.score);
-  }, 100);
-}
-
-function showLoading() {
-  const panel = document.getElementById('prediction-panel-body');
-  panel.innerHTML = '<div class="tw-lines" id="tw"></div>';
-  const tw = document.getElementById('tw');
-  const lines = [t('loading_line1'), t('loading_line2'), t('loading_line3')];
-  let i = 0;
-  return new Promise(resolve => {
-    const iv = setInterval(() => {
-      if (i < lines.length) { tw.innerHTML += lines[i++] + '<br>'; }
-      else { clearInterval(iv); setTimeout(resolve, 200); }
-    }, 300);
-  });
-}
-
-window.addEventListener('DOMContentLoaded', () => {
-  applyTranslations();
-  const last = Storage.getLastResult();
-  if (last) renderPredictionPanel(last);
-});
-</script>
+<script type="module" src="/static/js/app.js?v={{ app_version }}"></script>
 {% block scripts %}{% endblock %}
 </body>
 </html>
