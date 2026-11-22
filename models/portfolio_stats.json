@@ -1,0 +1,382 @@
+{
+ "sample": "Out-of-time validation sample",
+ "n": 61503,
+ "default_rate": 0.0807,
+ "metrics": {
+  "auc": 0.762,
+  "ks": 0.399,
+  "gini": 0.524,
+  "psi": 0.0001,
+  "auc_train": 0.763,
+  "lgbm_auc": 0.772
+ },
+ "score_stats": {
+  "mean": 527.1,
+  "p10": 488,
+  "p50": 528,
+  "p90": 564
+ },
+ "histogram": [
+  {
+   "from": 440,
+   "to": 450,
+   "count": 335,
+   "default_rate": 0.5134
+  },
+  {
+   "from": 450,
+   "to": 460,
+   "count": 505,
+   "default_rate": 0.3881
+  },
+  {
+   "from": 460,
+   "to": 470,
+   "count": 980,
+   "default_rate": 0.3327
+  },
+  {
+   "from": 470,
+   "to": 480,
+   "count": 1824,
+   "default_rate": 0.2615
+  },
+  {
+   "from": 480,
+   "to": 490,
+   "count": 2897,
+   "default_rate": 0.2047
+  },
+  {
+   "from": 490,
+   "to": 500,
+   "count": 4335,
+   "default_rate": 0.152
+  },
+  {
+   "from": 500,
+   "to": 510,
+   "count": 5787,
+   "default_rate": 0.1147
+  },
+  {
+   "from": 510,
+   "to": 520,
+   "count": 7254,
+   "default_rate": 0.0867
+  },
+  {
+   "from": 520,
+   "to": 530,
+   "count": 8000,
+   "default_rate": 0.0594
+  },
+  {
+   "from": 530,
+   "to": 540,
+   "count": 8214,
+   "default_rate": 0.0387
+  },
+  {
+   "from": 540,
+   "to": 550,
+   "count": 7254,
+   "default_rate": 0.0283
+  },
+  {
+   "from": 550,
+   "to": 560,
+   "count": 5869,
+   "default_rate": 0.0228
+  },
+  {
+   "from": 560,
+   "to": 570,
+   "count": 3977,
+   "default_rate": 0.0171
+  },
+  {
+   "from": 570,
+   "to": 580,
+   "count": 2360,
+   "default_rate": 0.0136
+  },
+  {
+   "from": 580,
+   "to": 590,
+   "count": 1203,
+   "default_rate": 0.0108
+  },
+  {
+   "from": 590,
+   "to": 600,
+   "count": 490,
+   "default_rate": 0.0041
+  },
+  {
+   "from": 600,
+   "to": 610,
+   "count": 163,
+   "default_rate": 0.0061
+  },
+  {
+   "from": 610,
+   "to": 620,
+   "count": 56,
+   "default_rate": 0.0179
+  }
+ ],
+ "bands": [
+  {
+   "band": "Very High",
+   "share": 0.1768,
+   "default_rate": 0.2228
+  },
+  {
+   "band": "High",
+   "share": 0.212,
+   "default_rate": 0.0991
+  },
+  {
+   "band": "Medium",
+   "share": 0.2636,
+   "default_rate": 0.0489
+  },
+  {
+   "band": "Low",
+   "share": 0.2134,
+   "default_rate": 0.0258
+  },
+  {
+   "band": "Very Low",
+   "share": 0.1341,
+   "default_rate": 0.0142
+  }
+ ],
+ "iv": [
+  {
+   "feature": "EXT_SOURCE_3",
+   "iv": 0.3353
+  },
+  {
+   "feature": "EXT_SOURCE_2",
+   "iv": 0.319
+  },
+  {
+   "feature": "EXT_SOURCE_1",
+   "iv": 0.148
+  },
+  {
+   "feature": "bureau_days_credit_mean",
+   "iv": 0.1233
+  },
+  {
+   "feature": "DAYS_EMPLOYED",
+   "iv": 0.1158
+  },
+  {
+   "feature": "AMT_GOODS_PRICE",
+   "iv": 0.0925
+  },
+  {
+   "feature": "DAYS_BIRTH",
+   "iv": 0.0903
+  },
+  {
+   "feature": "OCCUPATION_TYPE",
+   "iv": 0.0784
+  },
+  {
+   "feature": "ORGANIZATION_TYPE",
+   "iv": 0.0735
+  },
+  {
+   "feature": "inst_late_payment_rate",
+   "iv": 0.0651
+  },
+  {
+   "feature": "prev_approval_rate",
+   "iv": 0.0627
+  },
+  {
+   "feature": "cc_util_mean",
+   "iv": 0.0621
+  },
+  {
+   "feature": "AMT_CREDIT",
+   "iv": 0.0592
+  },
+  {
+   "feature": "NAME_INCOME_TYPE",
+   "iv": 0.056
+  },
+  {
+   "feature": "prev_refused_count",
+   "iv": 0.0556
+  },
+  {
+   "feature": "bureau_active_count",
+   "iv": 0.0547
+  },
+  {
+   "feature": "REGION_RATING_CLIENT_W_CITY",
+   "iv": 0.0516
+  },
+  {
+   "feature": "inst_amt_underpaid_mean",
+   "iv": 0.0497
+  },
+  {
+   "feature": "bureau_debt_sum",
+   "iv": 0.0482
+  },
+  {
+   "feature": "NAME_EDUCATION_TYPE",
+   "iv": 0.048
+  },
+  {
+   "feature": "cc_util_max",
+   "iv": 0.0458
+  },
+  {
+   "feature": "DAYS_LAST_PHONE_CHANGE",
+   "iv": 0.0457
+  },
+  {
+   "feature": "cc_balance_mean",
+   "iv": 0.0456
+  },
+  {
+   "feature": "bureau_days_enddate_max",
+   "iv": 0.043
+  },
+  {
+   "feature": "prev_days_decision_min",
+   "iv": 0.0421
+  },
+  {
+   "feature": "bureau_closed_count",
+   "iv": 0.0408
+  },
+  {
+   "feature": "inst_days_late_max",
+   "iv": 0.0394
+  },
+  {
+   "feature": "CODE_GENDER",
+   "iv": 0.0384
+  },
+  {
+   "feature": "FLOORSMAX_AVG",
+   "iv": 0.0377
+  },
+  {
+   "feature": "DAYS_ID_PUBLISH",
+   "iv": 0.0374
+  },
+  {
+   "feature": "cc_drawings_mean",
+   "iv": 0.0368
+  },
+  {
+   "feature": "TOTALAREA_MODE",
+   "iv": 0.0361
+  },
+  {
+   "feature": "prev_credit_util_mean",
+   "iv": 0.0356
+  },
+  {
+   "feature": "REGION_POPULATION_RELATIVE",
+   "iv": 0.0353
+  },
+  {
+   "feature": "FLAG_EMP_PHONE",
+   "iv": 0.0336
+  },
+  {
+   "feature": "prev_amt_down_payment_mean",
+   "iv": 0.0334
+  },
+  {
+   "feature": "REG_CITY_NOT_WORK_CITY",
+   "iv": 0.033
+  },
+  {
+   "feature": "AMT_ANNUITY",
+   "iv": 0.0297
+  },
+  {
+   "feature": "inst_days_late_mean",
+   "iv": 0.0293
+  },
+  {
+   "feature": "DAYS_REGISTRATION",
+   "iv": 0.0289
+  },
+  {
+   "feature": "YEARS_BEGINEXPLUATATION_MODE",
+   "iv": 0.0286
+  },
+  {
+   "feature": "FLAG_DOCUMENT_3",
+   "iv": 0.0285
+  },
+  {
+   "feature": "pos_months_balance",
+   "iv": 0.0284
+  },
+  {
+   "feature": "prev_amt_annuity_mean",
+   "iv": 0.0271
+  },
+  {
+   "feature": "ENTRANCES_AVG",
+   "iv": 0.027
+  },
+  {
+   "feature": "pos_count",
+   "iv": 0.0269
+  },
+  {
+   "feature": "WALLSMATERIAL_MODE",
+   "iv": 0.0263
+  },
+  {
+   "feature": "EMERGENCYSTATE_MODE",
+   "iv": 0.0236
+  },
+  {
+   "feature": "REG_CITY_NOT_LIVE_CITY",
+   "iv": 0.0235
+  },
+  {
+   "feature": "bureau_max_overdue",
+   "iv": 0.023
+  },
+  {
+   "feature": "NONLIVINGAREA_AVG",
+   "iv": 0.0225
+  },
+  {
+   "feature": "OWN_CAR_AGE",
+   "iv": 0.0225
+  },
+  {
+   "feature": "bureau_bb_dpd_months_sum",
+   "iv": 0.022
+  },
+  {
+   "feature": "BASEMENTAREA_AVG",
+   "iv": 0.0216
+  },
+  {
+   "feature": "pos_completed_count",
+   "iv": 0.0205
+  },
+  {
+   "feature": "cc_payment_rate_mean",
+   "iv": 0.02
+  }
+ ]
+}

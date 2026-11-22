@@ -1,0 +1,14 @@
+# Runtime dependencies for the deployed scoring app (used by the Dockerfile).
+# Versions of scikit-learn / lightgbm / optbinning / numpy / pandas must match
+# the ones the models/*.pkl files were pickled with.
+# requirements.txt is the full local environment (notebooks, torch, etc.).
+fastapi==0.135.3
+uvicorn[standard]==0.44.0
+Jinja2==3.1.6
+pydantic==2.12.5
+numpy==2.2.6
+pandas==2.3.1
+scikit-learn==1.7.1
+lightgbm==4.6.0
+optbinning==0.21.0
+joblib==1.5.1

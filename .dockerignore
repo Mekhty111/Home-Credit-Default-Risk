@@ -1,0 +1,9 @@
+# Only app/, the model artifacts and requirements-app.txt go into the image.
+*
+!app/
+!models/*.pkl
+!models/*.json
+!models/scorecard_table.csv
+!requirements-app.txt
+**/__pycache__
+.env*
