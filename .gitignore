@@ -2,6 +2,10 @@
 *.parquet
 
 models/*.pkl
+# Small model files the app loads at startup (~1.5 MB) are committed for deployment.
+!models/logreg_woe.pkl
+!models/lgbm_model.pkl
+!models/binning_process.pkl
 models/*.npy
 
 *venv/
