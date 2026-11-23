@@ -186,13 +186,18 @@ table { border-collapse: collapse; width: 100%; }
 }
 .topbar__inner { height: 100%; display: flex; align-items: stretch; gap: 32px; }
 
-.brand { display: inline-flex; align-items: center; gap: 10px; flex: none; }
-.brand__name { font-weight: 600; font-size: 15px; letter-spacing: -.01em; }
-.brand__tag {
-  font-size: 13px; color: var(--ink-3);
-  padding-left: 10px; border-left: 1px solid var(--line-2);
-  line-height: 1;
+.back-link {
+  display: inline-flex; align-items: center; gap: 6px; align-self: center; flex: none;
+  height: 32px; padding: 0 12px 0 9px;
+  font-size: 13px; font-weight: 500;
+  color: var(--ink-2);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  transition: color .15s, border-color .15s, background-color .15s;
 }
+.back-link .icon { width: 15px; height: 15px; transition: transform .15s var(--ease-out); }
+.back-link:hover { color: var(--ink); border-color: var(--ink-4); background: var(--surface-2); }
+.back-link:hover .icon { transform: translateX(-2px); }
 
 .nav { position: relative; display: flex; align-items: stretch; gap: 4px; }
 .nav__indicator {
@@ -808,6 +813,7 @@ table { border-collapse: collapse; width: 100%; }
   border-bottom: 1px solid var(--line);
 }
 .form-card__title { font-size: 14px; font-weight: 600; }
+.form-card__head .icon-chip, .collapsible__toggle .icon-chip { display: none; }
 .form-card__sub { font-size: 13px; color: var(--ink-3); }
 .form-card__step { margin-left: auto; font: 500 12px var(--font-mono); color: var(--ink-3); }
 .form-card__body { padding: 20px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 16px; }
@@ -1089,7 +1095,6 @@ table { border-collapse: collapse; width: 100%; }
   .metric-grid { grid-template-columns: repeat(2, 1fr); }
   .summary-strip { grid-template-columns: repeat(2, 1fr); }
   .topbar__inner { gap: 20px; }
-  .brand__tag { display: none; }
 }
 
 @media (max-width: 720px) {

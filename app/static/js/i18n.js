@@ -5,7 +5,7 @@ export const STRINGS = {
     nav_overview: 'Overview', nav_score: 'New application', nav_history: 'Decisions', nav_model: 'Model',
     nav_overview_short: 'Overview', nav_score_short: 'Score', nav_history_short: 'Decisions', nav_model_short: 'Model',
     status_checking: 'Connecting', status_online: 'Model online', status_offline: 'API offline',
-    change_language: 'Change language', toggle_theme: 'Toggle theme',
+    change_language: 'Change language', toggle_theme: 'Toggle theme', back_resume: 'Back to resume',
     footer_tagline: 'Explainable credit decisioning on Home Credit data',
     api_docs: 'API docs',
 
@@ -130,7 +130,7 @@ export const STRINGS = {
     nav_overview: 'Обзор', nav_score: 'Новая заявка', nav_history: 'Решения', nav_model: 'Модель',
     nav_overview_short: 'Обзор', nav_score_short: 'Скоринг', nav_history_short: 'Решения', nav_model_short: 'Модель',
     status_checking: 'Подключение', status_online: 'Модель онлайн', status_offline: 'API недоступен',
-    change_language: 'Сменить язык', toggle_theme: 'Сменить тему',
+    change_language: 'Сменить язык', toggle_theme: 'Сменить тему', back_resume: 'Вернуться к резюме',
     footer_tagline: 'Объяснимые кредитные решения на данных Home Credit',
     api_docs: 'Документация API',
 
@@ -251,7 +251,7 @@ export const STRINGS = {
     nav_overview: 'İcmal', nav_score: 'Yeni müraciət', nav_history: 'Qərarlar', nav_model: 'Model',
     nav_overview_short: 'İcmal', nav_score_short: 'Skorinq', nav_history_short: 'Qərarlar', nav_model_short: 'Model',
     status_checking: 'Qoşulur', status_online: 'Model aktivdir', status_offline: 'API əlçatmazdır',
-    change_language: 'Dili dəyiş', toggle_theme: 'Mövzunu dəyiş',
+    change_language: 'Dili dəyiş', toggle_theme: 'Mövzunu dəyiş', back_resume: 'CV-yə qayıt',
     footer_tagline: 'Home Credit məlumatları əsasında izahlı kredit qərarları',
     api_docs: 'API sənədləri',
 
