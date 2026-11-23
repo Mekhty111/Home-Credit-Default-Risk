@@ -1,14 +1,29 @@
+import os
+import json
+
 import numpy as np
 import pandas as pd
 import joblib
-import json
 
-LR              = joblib.load('../models/logreg_woe.pkl')
-LGBM            = joblib.load('../models/lgbm_model.pkl')
-BINNING_PROCESS = joblib.load('../models/binning_process.pkl')
+MODELS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'models')
 
-with open('../models/feature_names.json') as f:
+
+def _model_path(name: str) -> str:
+    return os.path.join(MODELS_DIR, name)
+
+
+LR              = joblib.load(_model_path('logreg_woe.pkl'))
+LGBM            = joblib.load(_model_path('lgbm_model.pkl'))
+BINNING_PROCESS = joblib.load(_model_path('binning_process.pkl'))
+
+with open(_model_path('feature_names.json')) as f:
     FEATURES = json.load(f)
+
+# Category vocabularies used at training time: pandas `.cat.codes` on the full
+# training column, i.e. the sorted unique values (with NaN -> 'Missing').
+with open(_model_path('category_codes.json'), encoding='utf-8') as f:
+    CATEGORY_CODES = {col: {v: float(i) for i, v in enumerate(vals)}
+                      for col, vals in json.load(f).items()}
 
 # Все переменные которые знает BinningProcess
 BP_VARS = BINNING_PROCESS.variable_names
@@ -19,18 +34,32 @@ BASE_ODDS  = 19
 FACTOR     = PDO / np.log(2)
 OFFSET     = BASE_SCORE - FACTOR * np.log(BASE_ODDS)
 
+# Score = OFFSET + FACTOR * ln(good/bad odds) = OFFSET - FACTOR * logit(PD),
+# so a higher score always means a safer applicant.
+N_FEATURES     = len(FEATURES)
+POINTS_OFFSET  = (OFFSET - FACTOR * LR.intercept_[0]) / N_FEATURES
+COEFS          = dict(zip(FEATURES, LR.coef_[0]))
+
+# Cut-offs calibrated on the out-of-time sample (observed default rate):
+#   <500: 22.3% · 500–519: 9.9% · 520–539: 4.9% · 540–559: 2.6% · 560+: 1.4%
+RISK_BANDS = [
+    (500,    'Very High', 'REJECT',              'High default risk — application declined'),
+    (520,    'High',      'MANUAL REVIEW',       'Elevated risk — requires manual underwriting'),
+    (540,    'Medium',    'CONDITIONAL APPROVE', 'Moderate risk — approve with conditions'),
+    (560,    'Low',       'APPROVE',             'Low risk — approve standard terms'),
+    (np.inf, 'Very Low',  'APPROVE + BEST RATE', 'Minimal risk — approve with best interest rate'),
+]
+
+
+def feature_points(feature: str, woe: float) -> float:
+    """Scorecard points a single feature contributes for a given WoE value."""
+    return -FACTOR * COEFS[feature] * woe + POINTS_OFFSET
+
 
 def get_risk_band(score: int) -> tuple:
-    if score < 520:
-        return 'Very High',  'REJECT',             'High default risk — application declined'
-    elif score < 560:
-        return 'High',       'MANUAL REVIEW',       'Elevated risk — requires manual underwriting'
-    elif score < 600:
-        return 'Medium',     'CONDITIONAL APPROVE', 'Moderate risk — approve with conditions'
-    elif score < 640:
-        return 'Low',        'APPROVE',             'Low risk — approve standard terms'
-    else:
-        return 'Very Low',   'APPROVE + BEST RATE', 'Minimal risk — approve with best interest rate'
+    for upper, band, action, interpretation in RISK_BANDS:
+        if score < upper:
+            return band, action, interpretation
 
 
 def preprocess(input_dict: dict) -> pd.DataFrame:
@@ -42,17 +71,14 @@ def preprocess(input_dict: dict) -> pd.DataFrame:
         if col not in df.columns:
             df[col] = np.nan
 
-    # Encode categoricals
-    cat_cols = df.select_dtypes(include='object').columns.tolist()
-    for col in cat_cols:
-        df[col] = (df[col]
-                   .fillna('Missing')
-                   .astype('category')
-                   .cat.codes
-                   .astype(float))
+    # Encode categoricals with the training-time vocabulary; unseen -> NaN (missing bin)
+    for col, codes in CATEGORY_CODES.items():
+        value = df.at[0, col]
+        value = 'Missing' if value is None or (isinstance(value, float) and np.isnan(value)) else value
+        df[col] = codes.get(value, np.nan)
 
     # Передаём ВСЕ bp_vars, потом выбираем только FEATURES
-    X = df[BP_VARS].copy().astype(float)
+    X = df[BP_VARS].apply(pd.to_numeric, errors='coerce').astype(float)
     woe_all = BINNING_PROCESS.transform(X, metric='woe')
 
     # Возвращаем только финальные фичи модели
@@ -66,14 +92,20 @@ def predict(input_dict: dict) -> dict:
     lr_prob   = float(LR.predict_proba(woe)[0][1])
     lgbm_prob = float(LGBM.predict_proba(woe)[0][1])
 
-    n      = len(FEATURES)
-    offset = (OFFSET + FACTOR * LR.intercept_[0]) / n
-    score  = sum(
-        FACTOR * LR.coef_[0][i] * woe[feat].values[0] + offset
-        for i, feat in enumerate(FEATURES)
-    )
-    score = int(round(score))
+    contributions = []
+    for feat in FEATURES:
+        w = float(woe[feat].values[0])
+        raw = input_dict.get(feat)
+        contributions.append({
+            'feature' : feat,
+            'value'   : raw if raw is None or isinstance(raw, (str, int, float)) else str(raw),
+            'provided': raw is not None,
+            'woe'     : round(w, 4),
+            # Points relative to a neutral (WoE = 0) applicant: >0 lowers risk
+            'impact'  : round(float(-FACTOR * COEFS[feat] * w), 2),
+        })
 
+    score = int(round(sum(feature_points(f, float(woe[f].values[0])) for f in FEATURES)))
     band, action, interpretation = get_risk_band(score)
 
     return {
@@ -83,4 +115,5 @@ def predict(input_dict: dict) -> dict:
         'risk_band'       : band,
         'action'          : action,
         'interpretation'  : interpretation,
+        'contributions'   : sorted(contributions, key=lambda c: c['impact']),
     }

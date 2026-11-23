@@ -1,67 +1,166 @@
 {% extends "base.html" %}
-{% block title %}Dashboard{% endblock %}
+{% block title %}Overview{% endblock %}
 {% block content %}
 
-<div class="section-title" data-i18n="system_dashboard"></div>
-
-<div class="stats-grid">
-  <div class="stat-card">
-    <div class="stat-label" data-i18n="total_scored"></div>
-    <div class="stat-value c-primary" id="st-total">0</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-label" data-i18n="approved"></div>
-    <div class="stat-value c-primary" id="st-approved">0</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-label" data-i18n="rejected"></div>
-    <div class="stat-value c-error" id="st-rejected">0</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-label" data-i18n="avg_score"></div>
-    <div class="stat-value c-text" id="st-avg">—</div>
-  </div>
-</div>
-
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-  <div class="card">
-    <div class="section-title" data-i18n="quick_actions"></div>
-    <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
-      <a href="/ui/score" class="btn-secondary" data-i18n="btn_run"></a>
-      <a href="/ui/history" class="btn-secondary" data-i18n="btn_history"></a>
+<section class="container intro">
+  <div class="intro__copy">
+    <div class="page-head__eyebrow" data-i18n="hero_eyebrow"></div>
+    <h1 class="page-head__title" data-i18n="hero_title_a"></h1>
+    <p class="page-head__sub" data-i18n="hero_lead"></p>
+    <div class="intro__cta">
+      <a href="/ui/score" class="btn btn--primary">
+        <span data-i18n="hero_cta_primary"></span>
+        <svg class="icon arrow"><use href="#i-arrow-right"/></svg>
+      </a>
+      <a href="/ui/model" class="btn" data-i18n="hero_cta_secondary"></a>
     </div>
   </div>
-  <div class="card">
-    <div class="section-title" data-i18n="system_status"></div>
-    <div style="font-size:12px;line-height:2" id="status-block">
-      <div>  api_url  = <span style="color:var(--primary)">http://localhost:8000</span></div>
-      <div>  model_lr  = <span id="feat-status" style="color:var(--muted)">loading...</span></div>
-      <div>  cors     = <span style="color:var(--primary)">enabled</span></div>
+
+  <div class="card spec">
+    <div class="card__head">
+      <div class="card__title" data-i18n="spec_title"></div>
+      <span class="spec__version mono">v{{ app_version }}</span>
+    </div>
+    <dl class="spec__list">
+      <div><dt data-i18n="spec_model"></dt><dd data-i18n="m_lr_name"></dd></div>
+      <div><dt data-i18n="spec_bench"></dt><dd>LightGBM</dd></div>
+      <div><dt data-i18n="spec_train"></dt><dd class="mono">307,511</dd></div>
+      <div><dt data-i18n="spec_oot"></dt><dd class="mono" id="meta-validated">61,503</dd></div>
+      <div><dt data-i18n="spec_features"></dt><dd class="mono">56</dd></div>
+      <div><dt data-i18n="spec_scale"></dt><dd class="mono">PDO 20 · 600 @ 19:1</dd></div>
+      <div class="spec__live">
+        <dt data-i18n="spec_sample"></dt>
+        <dd><span class="spec__decision" id="fc-decision">—</span> <span class="mono muted" id="fc-score"></span></dd>
+      </div>
+      <div><dt data-i18n="fc_scored_in"></dt><dd class="mono" id="fc-latency">—</dd></div>
+    </dl>
+  </div>
+</section>
+
+<section class="container section">
+  <div class="kpis">
+    <div class="kpi">
+      <div class="kpi__label"><span data-i18n="kpi_auc"></span><span class="tip-icon" tabindex="0" data-i18n-attr="data-tip:tip_auc"><svg class="icon"><use href="#i-info"/></svg></span></div>
+      <div class="kpi__value">0.762</div>
+      <div class="kpi__bench"><span class="kpi__bench-fill" data-w="76.2"></span><span class="kpi__bench-mark" style="left:65%"></span></div>
+      <div class="kpi__foot"><span data-i18n="kpi_min" data-i18n-vars='{"x":"0.65"}'></span><span class="badge badge--good" data-i18n="kpi_good"></span></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi__label"><span data-i18n="kpi_gini"></span><span class="tip-icon" tabindex="0" data-i18n-attr="data-tip:tip_gini"><svg class="icon"><use href="#i-info"/></svg></span></div>
+      <div class="kpi__value">0.524</div>
+      <div class="kpi__bench"><span class="kpi__bench-fill" data-w="52.4"></span><span class="kpi__bench-mark" style="left:30%"></span></div>
+      <div class="kpi__foot"><span data-i18n="kpi_min" data-i18n-vars='{"x":"0.30"}'></span><span class="badge badge--good" data-i18n="kpi_good"></span></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi__label"><span data-i18n="kpi_ks"></span><span class="tip-icon" tabindex="0" data-i18n-attr="data-tip:tip_ks"><svg class="icon"><use href="#i-info"/></svg></span></div>
+      <div class="kpi__value">0.399</div>
+      <div class="kpi__bench"><span class="kpi__bench-fill" data-w="39.9"></span><span class="kpi__bench-mark" style="left:20%"></span></div>
+      <div class="kpi__foot"><span data-i18n="kpi_min" data-i18n-vars='{"x":"0.20"}'></span><span class="badge badge--good" data-i18n="kpi_good"></span></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi__label"><span data-i18n="kpi_psi"></span><span class="tip-icon" tabindex="0" data-i18n-attr="data-tip:tip_psi"><svg class="icon"><use href="#i-info"/></svg></span></div>
+      <div class="kpi__value">0.0001</div>
+      <div class="kpi__bench"><span class="kpi__bench-fill" data-w="0.6" style="min-width:3px"></span><span class="kpi__bench-mark" style="left:100%;margin-left:-1px"></span></div>
+      <div class="kpi__foot"><span data-i18n="kpi_max_psi" data-i18n-vars='{"x":"0.10"}'></span><span class="badge badge--good" data-i18n="kpi_stable"></span></div>
     </div>
   </div>
-</div>
+</section>
 
-<script>
-document.addEventListener('DOMContentLoaded', async () => {
-  const h = Storage.getHistory();
-  document.getElementById('st-total').textContent    = h.length;
-  const approved = h.filter(e => e.action && e.action.startsWith('APPROVE'));
-  const rejected = h.filter(e => e.action && e.action === 'REJECT');
-  document.getElementById('st-approved').textContent = approved.length;
-  document.getElementById('st-rejected').textContent = rejected.length;
-  if (h.length) {
-    const avg = Math.round(h.reduce((s,e)=>s+e.score,0)/h.length);
-    document.getElementById('st-avg').textContent = avg;
-  }
-  try {
-    const r = await fetch('/features');
-    const d = await r.json();
-    document.getElementById('feat-status').textContent = `${d.count} features loaded`;
-    document.getElementById('feat-status').style.color = 'var(--primary)';
-  } catch {
-    document.getElementById('feat-status').textContent = 'offline';
-    document.getElementById('feat-status').style.color = 'var(--error)';
-  }
-});
-</script>
+<section class="container section">
+  <div class="grid-2">
+    <div class="card">
+      <div class="card__head">
+        <div>
+          <div class="card__title" data-i18n="dist_title"></div>
+          <div class="card__sub" id="dist-sub"></div>
+        </div>
+        <div class="legend">
+          <span class="legend__item"><span class="band-dot" style="background:var(--band-l)"></span><span data-i18n="legend_applicants"></span></span>
+          <span class="legend__item"><span class="legend__line"></span><span data-i18n="legend_dr"></span></span>
+        </div>
+      </div>
+      <div class="card__body">
+        <div class="chart" id="dist-chart">
+          <div class="skeleton" style="height:280px"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card__head">
+        <div>
+          <div class="card__title" data-i18n="bands_title"></div>
+          <div class="card__sub" data-i18n="bands_sub"></div>
+        </div>
+      </div>
+      <div class="card__body">
+        <div class="bands" id="bands"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="container section">
+  <div class="grid-2 grid-2--even">
+    <div class="card">
+      <div class="card__head">
+        <div>
+          <div class="card__title" data-i18n="session_title"></div>
+          <div class="card__sub" data-i18n="session_sub"></div>
+        </div>
+        <a href="/ui/history" class="btn btn--ghost btn--sm"><span data-i18n="view_all"></span><svg class="icon arrow"><use href="#i-arrow-right"/></svg></a>
+      </div>
+      <div class="card__body">
+        <div class="stat-row">
+          <div class="stat"><div class="stat__label" data-i18n="st_scored"></div><div class="stat__value" id="st-total">0</div></div>
+          <div class="stat"><div class="stat__label" data-i18n="st_approval"></div><div class="stat__value" id="st-approval">—</div></div>
+          <div class="stat"><div class="stat__label" data-i18n="st_avg"></div><div class="stat__value" id="st-avg">—</div></div>
+        </div>
+        <div class="recent" id="recent"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card__head">
+        <div>
+          <div class="card__title" data-i18n="cta_title_a"></div>
+          <div class="card__sub" data-i18n="cta_text"></div>
+        </div>
+      </div>
+      <div class="card__body">
+        <div class="quick">
+          <a class="quick__item" href="/ui/score?preset=prime" data-preset="prime">
+            <span class="band-dot" style="background:var(--band-vl)"></span>
+            <span class="quick__name" data-i18n="preset_prime"></span>
+            <span class="quick__meta mono"></span>
+            <svg class="icon row-chevron"><use href="#i-chevron-right"/></svg>
+          </a>
+          <a class="quick__item" href="/ui/score?preset=average" data-preset="average">
+            <span class="band-dot" style="background:var(--band-m)"></span>
+            <span class="quick__name" data-i18n="preset_average"></span>
+            <span class="quick__meta mono"></span>
+            <svg class="icon row-chevron"><use href="#i-chevron-right"/></svg>
+          </a>
+          <a class="quick__item" href="/ui/score?preset=subprime" data-preset="subprime">
+            <span class="band-dot" style="background:var(--band-vh)"></span>
+            <span class="quick__name" data-i18n="preset_subprime"></span>
+            <span class="quick__meta mono"></span>
+            <svg class="icon row-chevron"><use href="#i-chevron-right"/></svg>
+          </a>
+          <a class="quick__item" href="/ui/score">
+            <span class="band-dot" style="background:var(--ink-4)"></span>
+            <span class="quick__name" data-i18n="cta_empty"></span>
+            <span class="quick__meta"></span>
+            <svg class="icon row-chevron"><use href="#i-chevron-right"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="/static/js/pages/overview.js?v={{ app_version }}"></script>
 {% endblock %}
