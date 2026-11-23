@@ -25,8 +25,9 @@ export const STRINGS = {
 
     // Overview
     hero_badge: 'Live', hero_eyebrow: 'WoE scorecard · LightGBM benchmark',
-    hero_title_a: 'Credit decisions,', hero_title_b: 'scored & explained.',
-    hero_lead: 'A production-style risk engine trained on 307k Home Credit applications. Every decision comes with a probability of default, a risk band and the factors behind it.',
+    hero_title_a: 'Retail credit application scoring', hero_title_b: '',
+    hero_lead: 'Logistic WoE scorecard trained on 307k Home Credit applications, benchmarked against LightGBM. Each decision returns a score, probability of default, risk band and the factors behind it.',
+    spec_title: 'Model in service', spec_model: 'Production model', spec_bench: 'Benchmark', spec_train: 'Training sample', spec_oot: 'Out-of-time sample', spec_features: 'Features', spec_scale: 'Score scaling', spec_sample: 'Test request · prime profile',
     hero_cta_primary: 'Score an application', hero_cta_secondary: 'How the model works',
     hero_meta_auc: 'AUC, out-of-time', hero_meta_features: 'model features', hero_meta_validated: 'applications validated',
     fc_decision: 'Decision', fc_decision_value: 'Approve · best rate', fc_pd: 'Default probability', fc_scored_in: 'Scored in',
@@ -45,8 +46,8 @@ export const STRINGS = {
     st_scored: 'Scored', st_approval: 'Approval rate', st_avg: 'Avg. score', st_total: 'Total', st_rejected: 'Declined',
     recent_empty_title: 'No decisions yet', recent_empty_text: 'Score your first application — it will show up here.',
     view_all: 'View all',
-    cta_title_a: 'Ready to score', cta_title_b: 'a real applicant?',
-    cta_text: 'Start from a sample profile or enter your own data. The decision takes under a second.',
+    cta_title_a: 'Quick start', cta_title_b: '',
+    cta_text: 'Open the scorer with a sample profile pre-filled, or start from an empty form.', cta_empty: 'Empty form',
     cta_btn: 'Start scoring',
 
     // Score
@@ -89,7 +90,7 @@ export const STRINGS = {
     note_pd: 'Model probabilities come from training with balanced class weights and overstate absolute default rates. Use the band’s observed default rate for pricing.',
 
     // History
-    hi_eyebrow: 'Decision log', hi_title_a: 'Every decision,', hi_title_b: 'on record',
+    hi_eyebrow: 'Session history', hi_title_a: 'Decision log', hi_title_b: '',
     hi_sub: 'Applications scored in this browser. Open one to see the factors behind it.',
     f_all: 'All', f_approved: 'Approved', f_review: 'Review', f_rejected: 'Declined',
     search_placeholder: 'Search ID, band or decision…', btn_export: 'Export CSV', btn_clear: 'Clear log',
@@ -148,8 +149,9 @@ export const STRINGS = {
     just_now: 'только что', min_ago: '{n} мин назад', h_ago: '{n} ч назад', d_ago: '{n} дн назад',
 
     hero_badge: 'Live', hero_eyebrow: 'WoE-скоркарта · бенчмарк LightGBM',
-    hero_title_a: 'Кредитные решения —', hero_title_b: 'с оценкой и объяснением.',
-    hero_lead: 'Риск-движок промышленного уровня, обученный на 307 тыс. заявок Home Credit. Каждое решение — это вероятность дефолта, риск-зона и факторы, которые к ней привели.',
+    hero_title_a: 'Скоринг заявок на розничный кредит', hero_title_b: '',
+    hero_lead: 'Логистическая WoE-скоркарта на 307 тыс. заявок Home Credit с бенчмарком LightGBM. Для каждой заявки — балл, вероятность дефолта, риск-зона и факторы решения.',
+    spec_title: 'Модель в работе', spec_model: 'Рабочая модель', spec_bench: 'Бенчмарк', spec_train: 'Обучающая выборка', spec_oot: 'OOT-выборка', spec_features: 'Признаки', spec_scale: 'Шкала баллов', spec_sample: 'Тестовый запрос · prime-профиль',
     hero_cta_primary: 'Оценить заявку', hero_cta_secondary: 'Как работает модель',
     hero_meta_auc: 'AUC на OOT-выборке', hero_meta_features: 'признаков в модели', hero_meta_validated: 'заявок в валидации',
     fc_decision: 'Решение', fc_decision_value: 'Одобрить · лучшая ставка', fc_pd: 'Вероятность дефолта', fc_scored_in: 'Оценено за',
@@ -168,8 +170,8 @@ export const STRINGS = {
     st_scored: 'Оценено', st_approval: 'Одобрено', st_avg: 'Средний балл', st_total: 'Всего', st_rejected: 'Отказано',
     recent_empty_title: 'Пока нет решений', recent_empty_text: 'Оцените первую заявку — она появится здесь.',
     view_all: 'Все решения',
-    cta_title_a: 'Готовы оценить', cta_title_b: 'реального заёмщика?',
-    cta_text: 'Начните с образца профиля или введите свои данные. Решение — меньше чем за секунду.',
+    cta_title_a: 'Быстрый старт', cta_title_b: '',
+    cta_text: 'Откройте скоринг с заполненным образцом профиля или начните с пустой формы.', cta_empty: 'Пустая форма',
     cta_btn: 'Начать скоринг',
 
     sc_eyebrow: 'Новая заявка', sc_title_a: 'Оценка', sc_title_b: 'заёмщика',
@@ -210,7 +212,7 @@ export const STRINGS = {
     btn_copy_json: 'Копировать JSON', btn_new: 'Новая заявка',
     note_pd: 'Вероятности модели получены при обучении со сбалансированными весами классов и завышают абсолютный уровень дефолтов. Для ценообразования используйте фактический уровень дефолтов зоны.',
 
-    hi_eyebrow: 'Журнал решений', hi_title_a: 'Каждое решение', hi_title_b: 'сохранено',
+    hi_eyebrow: 'История сессии', hi_title_a: 'Журнал решений', hi_title_b: '',
     hi_sub: 'Заявки, оценённые в этом браузере. Откройте любую, чтобы увидеть факторы решения.',
     f_all: 'Все', f_approved: 'Одобрены', f_review: 'Проверка', f_rejected: 'Отказы',
     search_placeholder: 'Поиск по ID, зоне или решению…', btn_export: 'Выгрузить CSV', btn_clear: 'Очистить',
@@ -268,8 +270,9 @@ export const STRINGS = {
     just_now: 'indicə', min_ago: '{n} dəq əvvəl', h_ago: '{n} saat əvvəl', d_ago: '{n} gün əvvəl',
 
     hero_badge: 'Live', hero_eyebrow: 'WoE skorkart · LightGBM benchmark',
-    hero_title_a: 'Kredit qərarları —', hero_title_b: 'qiymətləndirilmiş və izahlı.',
-    hero_lead: '307 min Home Credit müraciəti üzərində öyrədilmiş sənaye səviyyəli risk mühərriki. Hər qərar defolt ehtimalı, risk zonası və onu müəyyən edən amillərlə gəlir.',
+    hero_title_a: 'Pərakəndə kredit müraciətlərinin skorinqi', hero_title_b: '',
+    hero_lead: '307 min Home Credit müraciəti üzərində öyrədilmiş logistik WoE skorkartı, LightGBM ilə müqayisədə. Hər müraciət üçün bal, defolt ehtimalı, risk zonası və qərar amilləri.',
+    spec_title: 'İşlək model', spec_model: 'Əsas model', spec_bench: 'Benchmark', spec_train: 'Təlim nümunəsi', spec_oot: 'OOT nümunə', spec_features: 'Xüsusiyyətlər', spec_scale: 'Bal şkalası', spec_sample: 'Test sorğusu · prime profil',
     hero_cta_primary: 'Müraciəti qiymətləndir', hero_cta_secondary: 'Model necə işləyir',
     hero_meta_auc: 'AUC, OOT nümunə', hero_meta_features: 'model xüsusiyyəti', hero_meta_validated: 'müraciət yoxlanılıb',
     fc_decision: 'Qərar', fc_decision_value: 'Təsdiq · ən yaxşı faiz', fc_pd: 'Defolt ehtimalı', fc_scored_in: 'Qiymətləndirmə',
@@ -288,8 +291,8 @@ export const STRINGS = {
     st_scored: 'Qiymətləndirilib', st_approval: 'Təsdiq payı', st_avg: 'Orta bal', st_total: 'Cəmi', st_rejected: 'İmtina',
     recent_empty_title: 'Hələ qərar yoxdur', recent_empty_text: 'İlk müraciəti qiymətləndirin — burada görünəcək.',
     view_all: 'Hamısına bax',
-    cta_title_a: 'Real müştərini', cta_title_b: 'qiymətləndirməyə hazırsınız?',
-    cta_text: 'Nümunə profillə başlayın və ya öz məlumatlarınızı daxil edin. Qərar bir saniyədən az çəkir.',
+    cta_title_a: 'Sürətli başlanğıc', cta_title_b: '',
+    cta_text: 'Skorinqi doldurulmuş nümunə profillə açın və ya boş formadan başlayın.', cta_empty: 'Boş forma',
     cta_btn: 'Skorinqə başla',
 
     sc_eyebrow: 'Yeni müraciət', sc_title_a: 'Müştərini', sc_title_b: 'qiymətləndir',
@@ -330,7 +333,7 @@ export const STRINGS = {
     btn_copy_json: 'JSON kopyala', btn_new: 'Yeni müraciət',
     note_pd: 'Model ehtimalları balanslaşdırılmış sinif çəkiləri ilə öyrədilib və mütləq defolt səviyyəsini şişirdir. Qiymətləndirmə üçün zonanın faktiki defolt səviyyəsindən istifadə edin.',
 
-    hi_eyebrow: 'Qərar jurnalı', hi_title_a: 'Hər qərar', hi_title_b: 'qeydə alınıb',
+    hi_eyebrow: 'Sessiya tarixçəsi', hi_title_a: 'Qərar jurnalı', hi_title_b: '',
     hi_sub: 'Bu brauzerdə qiymətləndirilmiş müraciətlər. Amilləri görmək üçün istənilənini açın.',
     f_all: 'Hamısı', f_approved: 'Təsdiq', f_review: 'Yoxlama', f_rejected: 'İmtina',
     search_placeholder: 'ID, zona və ya qərar üzrə axtarış…', btn_export: 'CSV yüklə', btn_clear: 'Təmizlə',

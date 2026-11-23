@@ -1,59 +1,45 @@
 import {
-  t, api, apiCached, history, fmtNum, fmtPct, relTime, escapeHtml, countUp, onReveal, reducedMotion,
-  BANDS, SCORE_MIN, SCORE_MAX, bandByApi, bandByScore, bandColor, hydrateBands, decisionGroup,
+  t, api, apiCached, history, fmtNum, fmtPct, relTime, escapeHtml, reducedMotion,
+  SCORE_MIN, SCORE_MAX, BANDS, bandByApi, bandByScore, bandColor, hydrateBands, decisionGroup,
 } from '../core.js';
 import { PRESETS } from '../presets.js';
 
 let stats = null;
-let hero = null;
-let heroResult = null;
+let sample = null;
 
-// ── Hero: live warm-up score drives the floating cards and the 3D card ─────
-async function initHero() {
-  const canvas = document.getElementById('hero-canvas');
-  const heroModule = import('../hero3d.js').catch(() => null);
-
-  let result = null;
+// ── Model panel: one live request with the prime profile ───────────────────
+async function initSample() {
   try {
     const body = JSON.stringify(PRESETS.prime);
     await api('/score', { method: 'POST', body }); // warm-up: first call pays for lazy init
     const t0 = performance.now();
-    result = await api('/score', { method: 'POST', body });
+    const result = await api('/score', { method: 'POST', body });
     document.getElementById('fc-latency').textContent = `${Math.max(1, Math.round(performance.now() - t0))} ms`;
-  } catch { /* hero still renders with defaults */ }
-
-  const band = result ? bandByApi(result.risk_band) : BANDS[4];
-  const score = result?.score ?? 583;
-  heroResult = { score, band };
-  renderHeroCards();
-
-  const mod = await heroModule;
-  if (mod) hero = await mod.mountHero(canvas, { score, bandKey: band.key, bandLabel: t(`band_${band.key}_short`) });
+    sample = { score: result.score, band: bandByApi(result.risk_band) };
+  } catch { /* panel keeps its placeholders */ }
+  renderSample();
 }
 
-function renderHeroCards() {
-  if (!heroResult) return;
-  const { score, band } = heroResult;
+function renderSample() {
+  if (!sample) return;
   const decision = document.getElementById('fc-decision');
-  decision.dataset.i18n = band.actionKey;
-  decision.textContent = t(band.actionKey);
-  document.getElementById('fc-pd').textContent = fmtPct(band.dr);
-  document.querySelector('.float-card--b .float-card__label').textContent = t('band_dr_short');
-  const ring = document.getElementById('fc-ring');
-  ring.style.stroke = bandColor(band);
-  ring.style.strokeDashoffset = String(100.5 * (1 - (score - SCORE_MIN) / (SCORE_MAX - SCORE_MIN)));
+  decision.dataset.i18n = sample.band.actionKey;
+  decision.textContent = t(sample.band.actionKey);
+  decision.style.setProperty('--band-color', bandColor(sample.band));
+  document.getElementById('fc-score').textContent = `· ${sample.score}`;
 }
 
-// ── Count-ups & benchmark bars ─────────────────────────────────────────────
-function initCounters() {
-  document.querySelectorAll('[data-count]').forEach((el) => {
-    const host = el.closest('[data-reveal]') || el;
-    onReveal(host, () => countUp(el, Number(el.dataset.count), { digits: Number(el.dataset.digits || 0), duration: 1600 }));
+function renderQuick() {
+  document.querySelectorAll('.quick__item[data-preset]').forEach((el) => {
+    const p = PRESETS[el.dataset.preset];
+    const ext = (p.EXT_SOURCE_1 + p.EXT_SOURCE_2 + p.EXT_SOURCE_3) / 3;
+    el.querySelector('.quick__meta').textContent = `EXT ${ext.toFixed(2)} · PTI ${fmtPct(p.AMT_ANNUITY / p.AMT_INCOME_TOTAL, 0)}`;
   });
-  const kpis = document.querySelector('.kpis');
-  onReveal(kpis, () => kpis.querySelectorAll('.kpi__bench-fill').forEach((el, i) => {
-    setTimeout(() => (el.style.width = `${el.dataset.w}%`), 120 * i);
-  }));
+}
+
+// ── Benchmark bars ─────────────────────────────────────────────────────────
+function initBench() {
+  document.querySelectorAll('.kpi__bench-fill').forEach((el) => (el.style.width = `${el.dataset.w}%`));
 }
 
 // ── Score distribution chart ───────────────────────────────────────────────
@@ -88,8 +74,8 @@ function renderChart() {
     const band = bandByScore(h.from);
     const bx = x(h.from) + 1.5, bw = x(h.to) - x(h.from) - 3;
     const by = y(h.count);
-    return `<rect class="bar-rect" data-i="${i}" x="${bx}" y="${by}" width="${bw}" height="${T + ih - by}" rx="3"
-      fill="${bandColor(band)}" style="transform:scaleY(0);transition:transform .9s var(--ease-out) ${i * 28}ms, opacity .2s"/>`;
+    return `<rect class="bar-rect" data-i="${i}" x="${bx}" y="${by}" width="${bw}" height="${T + ih - by}" rx="1"
+      fill="${bandColor(band)}" style="transform:scaleY(0);transition:transform .5s var(--ease-out) ${i * 12}ms, opacity .2s"/>`;
   }).join('');
 
   const pts = hist.filter((h) => h.default_rate !== null).map((h) => [x((h.from + h.to) / 2), yr(h.default_rate)]);
@@ -104,7 +90,7 @@ function renderChart() {
       ${cuts}
       <g>${bars}</g>
       <path class="dr-line" d="${line}" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"
-            style="transition:stroke-dashoffset 1.6s var(--ease-out) .4s"/>
+            style="transition:stroke-dashoffset .8s var(--ease-out) .2s"/>
       <g>${dots}</g>
       <g>${hits}</g>
     </svg>
@@ -117,7 +103,7 @@ function renderChart() {
     svg.querySelectorAll('.dr-dot').forEach((d) => (d.style.opacity = 1));
   };
   if (reducedMotion) animateIn();
-  else onReveal(box.closest('[data-reveal]'), () => requestAnimationFrame(animateIn));
+  else requestAnimationFrame(animateIn);
 
   const tip = box.querySelector('#chart-tip');
   const total = stats.n;
@@ -208,13 +194,14 @@ function renderSession() {
 }
 
 async function init() {
-  initCounters();
-  initHero();
+  initBench();
+  renderQuick();
+  initSample();
   renderSession();
   try {
     stats = await apiCached('/stats');
     hydrateBands(stats);
-    document.getElementById('meta-validated').dataset.count = stats.n;
+    document.getElementById('meta-validated').textContent = fmtNum(stats.n);
   } catch {
     document.getElementById('dist-chart').innerHTML = `<div class="empty"><div class="empty__title">${t('status_offline')}</div></div>`;
   }
@@ -225,12 +212,8 @@ async function init() {
 document.addEventListener('langchange', () => {
   renderBands();
   renderSession();
-  renderHeroCards();
+  renderSample();
   if (stats) renderChart();
-  if (hero && heroResult) hero.setCard({ score: heroResult.score, bandKey: heroResult.band.key, bandLabel: t(`band_${heroResult.band.key}_short`) });
-});
-document.addEventListener('themechange', () => {
-  if (hero && heroResult) hero.setCard({ score: heroResult.score, bandKey: heroResult.band.key, bandLabel: t(`band_${heroResult.band.key}_short`) });
 });
 
 init();

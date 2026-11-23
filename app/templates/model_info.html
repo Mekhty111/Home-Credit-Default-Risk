@@ -4,9 +4,9 @@
 <div class="container">
   <header class="page-head">
     <div>
-      <div class="page-head__eyebrow" data-reveal><svg class="icon icon--sm"><use href="#i-cpu"/></svg><span data-i18n="mo_eyebrow"></span></div>
+      <div class="page-head__eyebrow"><span data-i18n="mo_eyebrow"></span></div>
       <h1 class="page-head__title">
-        <span class="line"><span style="--d:60ms"><span data-i18n="mo_title_a"></span> <span class="serif" data-i18n="mo_title_b"></span></span></span>
+        <span data-i18n="mo_title_a"></span> <span data-i18n="mo_title_b"></span>
       </h1>
       <p class="page-head__sub" data-reveal style="--d:150ms" data-i18n="mo_sub"></p>
     </div>
@@ -37,7 +37,7 @@
         ("PSI", "0.0001", None, "bench_max", "0.10", "tip_psi"),
       ] %}
       {% for name, oot, train, bench, bv, tip in metrics %}
-      <div class="metric" data-reveal style="--d:{{ loop.index0 * 60 }}ms" data-tilt="5">
+      <div class="metric" data-reveal style="--d:{{ loop.index0 * 60 }}ms">
         <div class="metric__head">
           <span class="metric__name">{{ name }} <span class="tip-icon" tabindex="0" data-i18n-attr="data-tip:{{ tip }}"><svg class="icon"><use href="#i-info"/></svg></span></span>
           <span class="badge badge--good badge--plain"><svg class="icon icon--sm" style="width:12px;height:12px;stroke-width:2.4"><use href="#i-check"/></svg></span>

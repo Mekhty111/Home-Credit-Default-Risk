@@ -247,33 +247,6 @@ export function onReveal(el, fn) {
   else el.addEventListener('reveal', fn, { once: true });
 }
 
-export function initTilt(root = document) {
-  if (reducedMotion || matchMedia('(hover: none)').matches) return;
-  root.querySelectorAll('[data-tilt]').forEach((el) => {
-    const max = Number(el.dataset.tilt) || 6;
-    if (!el.querySelector('.tilt__glare')) el.insertAdjacentHTML('beforeend', '<span class="tilt__glare"></span>');
-    el.classList.add('tilt');
-    let raf;
-    el.addEventListener('pointermove', (e) => {
-      const r = el.getBoundingClientRect();
-      const x = (e.clientX - r.left) / r.width;
-      const y = (e.clientY - r.top) / r.height;
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
-        el.style.transition = 'transform .12s linear';
-        el.style.transform = `perspective(1000px) rotateX(${(0.5 - y) * max}deg) rotateY(${(x - 0.5) * max}deg) translateZ(0)`;
-        el.style.setProperty('--gx', `${x * 100}%`);
-        el.style.setProperty('--gy', `${y * 100}%`);
-      });
-    });
-    el.addEventListener('pointerleave', () => {
-      cancelAnimationFrame(raf);
-      el.style.transition = '';
-      el.style.transform = '';
-    });
-  });
-}
-
 // ── Chrome: nav indicator, menus, theme, API status ────────────────────────
 function initNav() {
   const nav = document.getElementById('nav');
@@ -378,7 +351,6 @@ export function bootChrome() {
   initTopbar();
   updateNavCount();
   observeReveals();
-  initTilt();
   checkApi();
   setInterval(checkApi, 30000);
 }

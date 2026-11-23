@@ -222,8 +222,7 @@ Execute `notebooks/01_data_overview.ipynb` through `notebooks/09_final_summary.i
 ### 4 · Start the application
 
 ```bash
-cd app
-uvicorn main:app --reload --port 8000
+uvicorn main:app --app-dir app --reload --port 8000
 ```
 
 App: `http://localhost:8000`
@@ -239,7 +238,7 @@ No build step required — Jinja2 templates are rendered server-side on every re
 
 Score a single loan applicant.
 
-**Request body** (all fields optional — missing values handled as separate WoE bins):
+**Request body** (all fields optional — missing values handled as separate WoE bins; any variable known to the binning process, e.g. `bureau_active_count`, may be passed as an extra field):
 
 ```json
 {
@@ -248,39 +247,45 @@ Score a single loan applicant.
   "EXT_SOURCE_3":           0.72,
   "DAYS_BIRTH":             -12000,
   "DAYS_EMPLOYED":          -2000,
-  "AMT_INCOME_TOTAL":       180000,
   "AMT_CREDIT":             450000,
   "AMT_ANNUITY":            22500,
   "AMT_GOODS_PRICE":        400000,
   "CODE_GENDER":            "M",
   "NAME_EDUCATION_TYPE":    "Higher education",
   "NAME_INCOME_TYPE":       "Working",
-  "REGION_RATING_CLIENT":   2,
-  "FLAG_OWN_CAR":           "N",
-  "FLAG_OWN_REALTY":        "Y"
+  "bureau_active_count":    1,
+  "inst_late_payment_rate": 0.02
 }
 ```
 
-**Response:**
+**Response** (`contributions` lists all 56 features sorted by impact — points vs. a neutral applicant, positive = lowers risk; truncated here):
 
 ```json
 {
-  "lr_probability":    0.1243,
-  "lgbm_probability":  0.1187,
-  "score":             612,
-  "risk_band":         "Low",
-  "action":            "APPROVE",
-  "interpretation":    "Low risk — approve standard terms"
+  "lr_probability":   0.2609,
+  "lgbm_probability": 0.2469,
+  "score":            545,
+  "risk_band":        "Low",
+  "action":           "APPROVE",
+  "interpretation":   "Low risk — approve standard terms",
+  "contributions": [
+    {"feature": "AMT_GOODS_PRICE", "value": 400000, "provided": true, "woe": -0.2778, "impact": -3.9},
+    {"feature": "EXT_SOURCE_2",    "value": 0.62,   "provided": true, "woe": 0.3888, "impact": 8.09}
+  ]
 }
 ```
 
 ### `GET /scorecard`
 
-Returns the full scorecard table as a JSON array (Feature, Bin, WoE, Coefficient, Points).
+Returns the full scorecard table as a JSON array (Feature, Bin, WoE, Coefficient, Points — higher points = safer).
+
+### `GET /stats`
+
+Validation metrics, the out-of-time score distribution (10-point bins with observed default rate) and per-band calibration.
 
 ### `GET /features`
 
-Returns the list of 56 features used by the model.
+Returns the list of 56 features used by the model, with their Information Value.
 
 ### `GET /health`
 
@@ -288,32 +293,31 @@ Health check endpoint. Returns `{"status": "healthy"}`.
 
 ### Risk Bands
 
-| Score | Risk Band | Recommended Action |
-|---|---|---|
-| < 520 | Very High | Reject |
-| 520 – 560 | High | Manual Review |
-| 560 – 600 | Medium | Conditional Approve |
-| 600 – 640 | Low | Approve |
-| > 640 | Very Low | Approve + Best Rate |
+Cut-offs are calibrated on the out-of-time sample (61,503 applications):
+
+| Score | Risk Band | Recommended Action | Observed default rate | Share |
+|---|---|---|---|---|
+| < 500 | Very High | Reject | 22.3% | 18% |
+| 500 – 519 | High | Manual Review | 9.9% | 21% |
+| 520 – 539 | Medium | Conditional Approve | 4.9% | 26% |
+| 540 – 559 | Low | Approve | 2.6% | 21% |
+| ≥ 560 | Very Low | Approve + Best Rate | 1.4% | 13% |
 
 ---
 
 ## Frontend
 
-A server-rendered terminal UI built with **FastAPI · Jinja2 · HTML · CSS · Vanilla JS**.
-
-No frontend framework, no build step — templates are rendered server-side and served directly by FastAPI.
-
-**Pages:**
+**Credence** — a server-rendered decisioning UI built with **FastAPI · Jinja2 · CSS · Vanilla JS (ES modules)**.
+No framework and no build step: templates are rendered by FastAPI, static assets live in `app/static/`.
 
 | Route | Template | Description |
 |---|---|---|
-| `GET /` | `dashboard.html` | Model metrics, session stats, pipeline overview |
-| `GET /score` | `score.html` | Applicant input form + live scoring result + gauge |
-| `GET /history` | `history.html` | Scoring log with CSV export |
-| `GET /model` | `model_info.html` | Scorecard table, benchmarks, feature list |
+| `GET /ui` | `dashboard.html` | Model-in-service panel with a live test request, validation KPIs, OOT score distribution, calibrated risk bands, session stats |
+| `GET /ui/score` | `score.html` | Human-friendly application form (years instead of `DAYS_*`, sliders, sample profiles, JSON mode), affordability ratios, IV-weighted model coverage, animated decision card with reason codes |
+| `GET /ui/history` | `history.html` | Decision log with filters, search, CSV export and a details drawer |
+| `GET /ui/model` | `model_info.html` | Pipeline, validation, model comparison, score scaling, decision policy, feature importance (IV) |
 
-**Design:** Dark terminal aesthetic, JetBrains Mono, green primary accent. Score gauge and results rendered via Vanilla JS after form submission to `POST /score`.
+**Design:** light and dark themes, EN / RU / AZ localisation, IBM Plex Sans / Mono typography, flat bordered surfaces with restrained motion, reduced-motion support and a mobile tab bar. Decisions are stored only in the browser (`localStorage`).
 
 ---
 
@@ -356,7 +360,7 @@ IV    = Σ (Distribution_Good_i − Distribution_Bad_i) × WoE_i
 The Logistic Regression model is converted to a points-based scorecard using standard PDO scaling:
 
 ```
-Score  = OFFSET + FACTOR × log(odds)
+Score  = OFFSET + FACTOR × ln(good:bad odds) = OFFSET − FACTOR × logit(PD)
 FACTOR = PDO / ln(2)
 OFFSET = Base Score − FACTOR × ln(Base Odds)
 ```
