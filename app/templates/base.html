@@ -10,13 +10,19 @@
   <link rel="icon" type="image/svg+xml" href="/static/img/favicon.svg" />
 
   <script>
-    // Apply theme before first paint to avoid a flash
+    // Apply theme before first paint to avoid a flash.
+    // Order: ?theme= from the page that opened the demo (kept for this tab),
+    // then the saved choice, then the system setting.
     (function () {
       try {
-        var t = localStorage.getItem('credence.theme');
-        if (!t || t === 'system') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        var read = function (k) { var v = localStorage.getItem(k); try { return JSON.parse(v); } catch (e) { return v; } };
+        var t = new URLSearchParams(location.search).get('theme');
+        if (t === 'dark' || t === 'light') sessionStorage.setItem('credence.themeOverride', t);
+        else t = sessionStorage.getItem('credence.themeOverride') || read('credence.theme');
+        if (t !== 'dark' && t !== 'light') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         document.documentElement.setAttribute('data-theme', t);
-        var l = localStorage.getItem('credence.lang');
+        if (window.self !== window.top) document.documentElement.setAttribute('data-embedded', '');
+        var l = read('credence.lang');
         if (l) document.documentElement.lang = l;
       } catch (e) {}
     })();

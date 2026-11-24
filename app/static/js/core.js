@@ -69,10 +69,17 @@ export function setLang(next) {
 // ── Theme ──────────────────────────────────────────────────────────────────
 export const getTheme = () => document.documentElement.getAttribute('data-theme') || 'light';
 
+// A theme handed over by the embedding page (?theme= or postMessage) lives in
+// sessionStorage for this tab, so it doesn't overwrite the visitor's own saved choice.
+const THEME_OVERRIDE = 'credence.themeOverride';
+const getOverride = () => { try { return sessionStorage.getItem(THEME_OVERRIDE); } catch { return null; } };
+const setOverride = (v) => { try { sessionStorage.setItem(THEME_OVERRIDE, v); } catch {} };
+
 export function setTheme(next, { animate = true } = {}) {
   const apply = () => {
     document.documentElement.setAttribute('data-theme', next);
-    store.set(KEYS.theme, next);
+    if (getOverride()) setOverride(next);
+    else store.set(KEYS.theme, next);
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', next === 'dark' ? '#0b0c10' : '#f4f3ef');
     document.dispatchEvent(new CustomEvent('themechange', { detail: next }));
   };
@@ -310,10 +317,34 @@ function initMenus() {
   syncLang();
 }
 
+// Pages allowed to embed the demo and set its theme.
+const EMBEDDERS = /^https:\/\/(www\.)?mehdiyev\.dev$|^https:\/\/mekhty111\.github\.io$|^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
+const embedded = window.self !== window.top;
+
 function initTheme() {
   document.getElementById('theme-btn')?.addEventListener('click', () => setTheme(getTheme() === 'dark' ? 'light' : 'dark'));
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-    if (!store.get(KEYS.theme)) setTheme(e.matches ? 'dark' : 'light', { animate: false });
+    if (!store.get(KEYS.theme) && !getOverride()) setTheme(e.matches ? 'dark' : 'light', { animate: false });
+  });
+  // The resume can switch the demo's theme live.
+  window.addEventListener('message', (e) => {
+    if (!embedded || e.source !== window.parent || !EMBEDDERS.test(e.origin)) return;
+    const t = e.data && e.data.type === 'credence:theme' ? e.data.theme : null;
+    if (t !== 'dark' && t !== 'light') return;
+    setOverride(t);
+    if (t !== getTheme()) setTheme(t, { animate: false });
+  });
+}
+
+// Inside the resume's demo window, "Back to resume" closes the window instead of
+// loading the resume inside itself.
+function initBackLink() {
+  const link = document.querySelector('.back-link');
+  if (!link || !embedded) return;
+  link.addEventListener('click', (e) => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+    e.preventDefault();
+    window.parent.postMessage({ type: 'credence:back' }, '*');
   });
 }
 
@@ -348,6 +379,7 @@ export function bootChrome() {
   initNav();
   initMenus();
   initTheme();
+  initBackLink();
   initTopbar();
   updateNavCount();
   observeReveals();
